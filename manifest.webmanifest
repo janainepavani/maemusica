@@ -1,0 +1,16 @@
+{
+  "name": "Repertório das Mães que Oram",
+  "short_name": "Repertório",
+  "description": "Cifras com troca de tom, partituras e caminhos para estudar as músicas das Mães que Oram, por Janaine Pavani.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#022F62",
+  "theme_color": "#022F62",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

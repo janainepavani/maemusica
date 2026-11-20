@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function myEmail() { return request.auth.token.email.lower(); }
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.email == 'janaine@janainepavani.com'
+        && request.auth.token.email_verified == true;
+    }
+    function profileFields() {
+      return ['nome', 'email', 'whats', 'cidade', 'uf', 'grupo', 'instr', 'aluna', 'criadoEm', 'ultimoAcesso', 'acessos'];
+    }
+    function validProfile(d) {
+      return d.keys().hasOnly(profileFields())
+        && d.nome is string && d.nome.size() > 0 && d.nome.size() <= 120
+        && d.email == myEmail()
+        && d.whats is string && d.whats.size() <= 40
+        && d.cidade is string && d.cidade.size() <= 80
+        && d.uf is string && d.uf.size() <= 2
+        && d.grupo is string && d.grupo.size() <= 120
+        && d.instr is string && d.instr.size() <= 40
+        && d.aluna in ['sim', 'nao'];
+    }
+
+    // Cadastro de cada mãe: ela lê e edita só o próprio; a Janaine vê todos
+    match /users/{uid} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow create: if signedIn() && request.auth.uid == uid && validProfile(request.resource.data);
+      allow update: if isAdmin()
+        || (signedIn() && request.auth.uid == uid && validProfile(request.resource.data)
+            && request.resource.data.email == resource.data.email);
+      allow delete: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Repertório das Mães que Oram</title>
+<meta name="theme-color" content="#022F62">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Repertório">
+<meta name="description" content="Cifras com troca de tom, partituras e caminhos para estudar as músicas das Mães que Oram, por Janaine Pavani.">
+<meta property="og:title" content="Repertório das Mães que Oram">
+<meta property="og:description" content="Cifras com troca de tom, partituras e caminhos para estudar música.">
+<meta property="og:image" content="https://maemusica.janainepavani.com/share.jpg">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:type" content="website">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app" id="app">
+
+  <section class="loading" id="v-loading"><img src="assets/logo-maes.png" alt="Mães que Oram pelos Filhos"></section>
+
+  <!-- ENTRADA -->
+  <section class="auth hidden" id="v-auth">
+    <div class="auth-top">
+      <img src="assets/logo-maes.png" alt="Mães que Oram pelos Filhos">
+      <h1>Repertório das Mães<br>que Oram</h1>
+      <div class="sub">cifras · partituras · estudo</div>
+    </div>
+    <div class="auth-card">
+      <div class="tabs" id="auth-tabs">
+        <button id="tab-new" class="on" type="button">Criar conta</button>
+        <button id="tab-login" type="button">Entrar</button>
+      </div>
+      <form id="f-new" autocomplete="on">
+        <div class="field"><label for="n-nome">Nome</label><input id="n-nome" name="nome" required autocomplete="name"></div>
+        <div class="field"><label for="n-email">E-mail</label><input id="n-email" name="email" type="email" required autocomplete="email"></div>
+        <div class="field"><label for="n-whats">WhatsApp</label><input id="n-whats" name="whats" type="tel" required placeholder="(00) 00000-0000" autocomplete="tel"></div>
+        <div class="row2">
+          <div class="field"><label for="n-cidade">Cidade</label><input id="n-cidade" name="cidade" required></div>
+          <div class="field uf"><label for="n-uf">Estado</label><select id="n-uf" name="uf" required class="uf-select"></select></div>
+        </div>
+        <div class="field"><label for="n-grupo">Nome do seu grupo</label><input id="n-grupo" name="grupo" required placeholder="Ex.: Grupo Nossa Senhora Aparecida"></div>
+        <div class="field"><label for="n-instr">Instrumento principal</label><select id="n-instr" name="instr" required class="instr-select"></select></div>
+        <div class="field"><label for="n-aluna">Já faz algum curso da Janaine?</label>
+          <select id="n-aluna" name="aluna" required><option value="">Escolha</option><option value="sim">Sim, já sou aluna</option><option value="nao">Ainda não</option></select></div>
+        <div class="field"><label for="n-senha">Crie uma senha</label><input id="n-senha" name="senha" type="password" minlength="6" required autocomplete="new-password" placeholder="mínimo 6 caracteres"></div>
+        <div class="err" id="err-new"></div>
+        <button class="btn-gold" type="submit">Criar minha conta</button>
+      </form>
+      <form id="f-login" class="hidden">
+        <div class="field"><label for="l-email">E-mail</label><input id="l-email" name="email" type="email" required autocomplete="email"></div>
+        <div class="field"><label for="l-senha">Senha</label><input id="l-senha" name="senha" type="password" required autocomplete="current-password"></div>
+        <div class="err" id="err-login"></div>
+        <button class="btn-gold" type="submit">Entrar</button>
+        <button class="link-btn" type="button" id="forgot">Esqueci minha senha</button>
+      </form>
+      <form id="f-complete" class="hidden">
+        <p style="color:#d5deeb;font-size:15px;margin-bottom:14px;line-height:1.5">Falta só completar o seu cadastro.</p>
+        <div class="field"><label for="c-nome">Nome</label><input id="c-nome" name="nome" required></div>
+        <div class="field"><label for="c-whats">WhatsApp</label><input id="c-whats" name="whats" type="tel" required></div>
+        <div class="row2">
+          <div class="field"><label for="c-cidade">Cidade</label><input id="c-cidade" name="cidade" required></div>
+          <div class="field uf"><label for="c-uf">Estado</label><select id="c-uf" name="uf" required class="uf-select"></select></div>
+        </div>
+        <div class="field"><label for="c-grupo">Nome do seu grupo</label><input id="c-grupo" name="grupo" required></div>
+        <div class="field"><label for="c-instr">Instrumento principal</label><select id="c-instr" name="instr" required class="instr-select"></select></div>
+        <div class="field"><label for="c-aluna">Já faz algum curso da Janaine?</label>
+          <select id="c-aluna" name="aluna" required><option value="">Escolha</option><option value="sim">Sim, já sou aluna</option><option value="nao">Ainda não</option></select></div>
+        <div class="err" id="err-complete"></div>
+        <button class="btn-gold" type="submit">Entrar no repertório</button>
+      </form>
+    </div>
+    <div class="auth-foot"><img src="assets/logo-p.png" alt="P by Janaine Pavani"></div>
+  </section>
+
+  <!-- REPERTÓRIO -->
+  <section id="v-home" class="hidden">
+    <div class="top">
+      <div class="top-row"><img src="assets/logo-maes.png" alt=""><img src="assets/logo-p.png" alt="" style="height:40px"></div>
+      <div class="hello" id="hello"></div>
+      <h2>Repertório</h2>
+      <div class="search"><input id="q" placeholder="Buscar música ou trecho da letra" type="search" aria-label="Buscar"></div>
+    </div>
+    <div class="main">
+      <div id="home-promo"></div>
+      <div class="sec">Músicas do movimento</div>
+      <div id="list"></div>
+    </div>
+  </section>
+
+  <!-- MÚSICA -->
+  <section id="v-song" class="hidden">
+    <div class="top song-top">
+      <button class="back" id="back" type="button">‹ Repertório</button>
+      <h1 id="s-title"></h1>
+      <div class="by" id="s-by"></div>
+      <div class="seg"><button id="seg-cifra" class="on" type="button">Cifra</button><button id="seg-part" type="button">Partituras</button></div>
+    </div>
+    <div id="pane-cifra">
+      <div class="controls">
+        <div class="ctrl-row">
+          <div class="lvl"><button data-lvl="intermediário" class="on" type="button">Intermediário</button><button data-lvl="simplificado" type="button">Simplificado</button></div>
+        </div>
+        <div class="ctrl-row">
+          <div class="stepper"><button id="k-down" type="button" aria-label="Descer meio tom">−</button><div class="v"><small>Tom</small><span id="k-val">D</span></div><button id="k-up" type="button" aria-label="Subir meio tom">+</button></div>
+          <div class="stepper"><button id="f-down" type="button" aria-label="Diminuir letra">A−</button><button id="f-up" type="button" aria-label="Aumentar letra" style="font-size:22px">A+</button></div>
+          <button class="mini" id="scroll" type="button">Rolar</button>
+          <button class="reset hidden" id="k-reset" type="button">tom original</button>
+        </div>
+      </div>
+      <div id="listen"></div>
+      <div class="meta" id="s-meta"></div>
+      <div class="cifra" id="cifra"></div>
+      <div class="study">
+        <div class="k">Aprofunde seu estudo</div>
+        <h3 id="study-h"></h3>
+        <p id="study-p"></p>
+        <a id="study-a" target="_blank" rel="noopener"></a>
+      </div>
+      <div class="footer-logo"><img src="assets/logo-p.png" alt=""></div>
+      <div style="height:100px"></div>
+    </div>
+    <div id="pane-part" class="hidden">
+      <div class="sheets" id="sheets"></div>
+      <div class="study" style="margin-top:6px">
+        <div class="k">Aprofunde seu estudo</div>
+        <h3>Quer tocar ou cantar este arranjo?</h3>
+        <p>As aulas do curso Repertório das Mães que Oram na Prática ensinam cada parte desta partitura, inclusive as vozes da harmonia vocal.</p>
+        <a class="cta-curso" target="_blank" rel="noopener">Conhecer o curso</a>
+      </div>
+      <div style="height:110px"></div>
+    </div>
+  </section>
+
+  <!-- CURSOS -->
+  <section id="v-study" class="hidden">
+    <div class="top">
+      <div class="top-row"><img src="assets/logo-maes.png" alt=""><img src="assets/logo-p.png" alt="" style="height:40px"></div>
+      <h2 style="margin-top:16px">Cursos</h2>
+      <div class="hello" style="margin-top:6px">Três caminhos para seguir aprendendo com a Janaine</div>
+    </div>
+    <div class="main">
+      <div id="study-top"></div>
+      <div class="path feat">
+        <div class="k">Curso atual</div>
+        <h3 id="dest-t"></h3>
+        <p id="dest-p"></p>
+        <a class="cta-curso" target="_blank" rel="noopener">Quero me inscrever</a>
+      </div>
+      <div class="path">
+        <div class="k">Caminho guiado</div>
+        <h3>Missão Recomeçar</h3>
+        <p>Um cronograma organizado, com aulas de poucos minutos por dia e tira-dúvidas ao vivo a cada quinze dias.</p>
+        <a id="lk-missao" target="_blank" rel="noopener">Conhecer a Missão</a>
+      </div>
+      <div class="path">
+        <div class="k">No seu tempo</div>
+        <h3>Cursos completos</h3>
+        <p>Formação Musical, Técnica Vocal, Violão, Teclado e Harmonia Vocal, para aprender do zero ou aprofundar, quando e como quiser.</p>
+        <a id="lk-cursos" target="_blank" rel="noopener">Ver os cursos</a>
+      </div>
+      <a class="nutror" id="lk-whats" style="background:#fff;color:var(--navy);border:1px solid var(--line);margin-top:10px" target="_blank" rel="noopener">
+        <div><b style="color:var(--navy)">Ficou com dúvida?</b><br><span style="color:var(--muted)">Fale com a Janaine no WhatsApp</span></div><div style="font-size:22px;color:var(--gold)">›</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- PERFIL -->
+  <section id="v-prof" class="hidden">
+    <div class="top">
+      <div class="top-row"><img src="assets/logo-maes.png" alt=""></div>
+      <h2 style="margin-top:16px" id="p-name"></h2>
+    </div>
+    <div class="main">
+      <form class="edit" id="f-prof">
+        <div class="field"><label for="p-nome">Nome</label><input id="p-nome" name="nome" required></div>
+        <div class="field"><label for="p-whats">WhatsApp</label><input id="p-whats" name="whats" type="tel" required></div>
+        <div class="row2">
+          <div class="field"><label for="p-cidade">Cidade</label><input id="p-cidade" name="cidade" required></div>
+          <div class="field uf"><label for="p-uf">Estado</label><select id="p-uf" name="uf" required class="uf-select"></select></div>
+        </div>
+        <div class="field"><label for="p-grupo">Nome do seu grupo</label><input id="p-grupo" name="grupo" required></div>
+        <div class="field"><label for="p-instr">Instrumento principal</label><select id="p-instr" name="instr" required class="instr-select"></select></div>
+        <div class="field"><label for="p-aluna">Já faz algum curso da Janaine?</label>
+          <select id="p-aluna" name="aluna" required><option value="sim">Sim, já sou aluna</option><option value="nao">Ainda não</option></select></div>
+        <button class="btn-navy" type="submit">Salvar alterações</button>
+      </form>
+      <button class="admin-link hidden" id="go-admin" type="button">Painel de cadastros</button>
+      <button class="out" id="logout" type="button">Sair</button>
+    </div>
+  </section>
+
+  <!-- PAINEL DA JANAINE -->
+  <section id="v-admin" class="hidden">
+    <div class="top">
+      <button class="back" id="adm-back" type="button">‹ Perfil</button>
+      <h2 style="margin-top:8px">Cadastros</h2>
+    </div>
+    <div class="main">
+      <div id="adm-verify"></div>
+      <div class="adm-stats"><div><b id="st-total">0</b><span>mães cadastradas</span></div><div><b id="st-alunas">0</b><span>já são alunas</span></div><div><b id="st-semana">0</b><span>novas em 7 dias</span></div></div>
+      <div class="adm-uf" id="adm-uf"></div>
+      <div class="adm-tools">
+        <input id="adm-q" placeholder="Buscar nome, cidade ou grupo" type="search">
+        <select id="adm-f"><option value="">Todas</option><option value="sim">Só alunas</option><option value="nao">Ainda não alunas</option></select>
+        <button id="adm-csv" type="button">Baixar planilha</button>
+      </div>
+      <div id="adm-list"></div>
+    </div>
+  </section>
+
+  <a class="float-cta hidden" id="float-cta" target="_blank" rel="noopener"></a>
+
+  <nav class="nav hidden" id="nav">
+    <button data-go="home" class="on" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>Repertório</button>
+    <button data-go="study" class="mid" type="button"><span class="circ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7l10-4 10 4-10 4-10-4z"/><path d="M6 9v5c0 1.7 2.7 3 6 3s6-1.3 6-3V9"/></svg></span>Cursos</button>
+    <button data-go="prof" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>Perfil</button>
+  </nav>
+
+  <div class="viewer hidden" id="viewer">
+    <div class="viewer-bar"><button id="v-close" type="button">‹ Voltar</button><div class="t" id="v-title"></div><button id="z-out" type="button">−</button><button id="z-in" type="button">+</button></div>
+    <div class="viewer-pages" id="v-pages"></div>
+  </div>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+[
+  {
+    "id": "oracao-pela-familia",
+    "titulo": "Oração pela Família",
+    "autor": "Padre Zezinho",
+    "cifra": "cifras/oracao-pela-familia.json",
+    "curso": true,
+    "youtube": "",
+    "audio": "",
+    "partituras": [
+      {
+        "nome": "Grade completa",
+        "desc": "Voz, cifra e acompanhamento",
+        "paginas": [
+          "partituras/oracao-pela-familia/grade-1.png",
+          "partituras/oracao-pela-familia/grade-2.png",
+          "partituras/oracao-pela-familia/grade-3.png",
+          "partituras/oracao-pela-familia/grade-4.png",
+          "partituras/oracao-pela-familia/grade-5.png",
+          "partituras/oracao-pela-familia/grade-6.png"
+        ]
+      },
+      {
+        "nome": "Partes da banda",
+        "desc": "Cifra para a banda",
+        "paginas": ["partituras/oracao-pela-familia/banda-1.png"]
+      }
+    ]
+  }
+]
