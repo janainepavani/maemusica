@@ -246,7 +246,6 @@ function renderList() {
       <div><div class="t">${esc(s.titulo)}</div><div class="a">${esc(s.autor)}</div>
       <div class="chips"><span class="chip">Cifra</span>${s.partituras?.length ? '<span class="chip">Partitura</span>' : ""}${s.youtube || s.audio ? '<span class="chip">Ouvir</span>' : ""}${s.curso ? '<span class="badge-aula">Tem aula no curso</span>' : ""}</div></div></button>`).join("");
   if (!q) {
-    if (!isAluna()) h += `<a class="mid-promo" href="${L.curso}" target="_blank" rel="noopener"><div><b>Novas músicas toda semana</b><span>No curso, cada música vem com aula de teclado, violão e vozes</span></div><div class="arr">›</div></a>`;
     h += (S.cfg.emBreve || []).map(t => `<div class="song soon"><div class="num">·</div><div><div class="t">${esc(t)}</div><div class="a">Em breve</div></div></div>`).join("");
   }
   $("#list").innerHTML = h || '<div class="empty">Nenhuma música encontrada.</div>';
