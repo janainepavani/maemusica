@@ -219,3 +219,26 @@ input,select{font:inherit}
 .adm-row .lib{margin-top:8px}
 .tag-pend{font-size:11px;padding:2px 8px;border-radius:20px;background:#F3D9CF;color:#7A2E14;font-weight:700;margin-left:6px}
 .pend-box{border:1.5px solid #E7B9A6;background:#FFF7F3}
+
+.mu-card{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px;background:var(--paper)}
+.mu-card .field{margin-bottom:8px}
+.mu-card .field label{color:var(--gold-dark);font-size:11px}
+.mu-card input[type=text],.mu-card input[type=url]{width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#fff;font-size:15px}
+.mu-file{display:flex;align-items:center;gap:8px;font-size:14px;padding:6px 0;border-top:1px dashed var(--line)}
+.mu-file span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+.mu-file select{padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:13px}
+.mu-chk{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--navy);margin:4px 0 8px}
+.mu-status{font-size:13px;color:var(--gold-dark);margin-top:6px;min-height:16px}
+.mu-status.ok{color:#2E7D4F}.mu-status.bad{color:#A33}
+.mu-new{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--navy);color:#fff;margin-left:6px;vertical-align:middle}
+.mu-actions{display:flex;gap:8px;margin-top:12px}
+.mu-actions button{flex:1;padding:12px;border-radius:10px;font-weight:700}
+.mu-send{background:var(--gold);color:var(--navy-deep)}
+.mu-cancel{background:#fff;border:1px solid var(--line);color:var(--muted)}
+.mu-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:14px}
+.mu-row:first-child{border-top:0}
+.mu-row div{flex:1;min-width:0}
+.mu-row b{color:var(--navy);display:block}
+.mu-row small{color:var(--muted)}
+.mu-row button{padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--navy);font-size:13px}
+.mu-list-h{font-weight:700;color:var(--navy);margin:16px 0 4px;font-size:15px}

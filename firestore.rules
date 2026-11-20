@@ -51,6 +51,13 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Músicas enviadas pelo painel: só quem está liberada lê; só a Janaine envia
+    match /songs/{id} {
+      allow read: if isAdmin() || (signedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'ativa');
+      allow write: if isAdmin();
+    }
+
     // Quem pode entrar: "alunas" ou "aberto"
     match /config/{doc} {
       allow read: if signedIn();

@@ -228,6 +228,16 @@
         <label class="btn-navy file-btn">Importar lista de alunas<input type="file" id="al-file" accept=".csv,.txt,text/csv,text/plain" hidden></label>
         <div class="adm-add"><input id="al-one" type="email" placeholder="Ou digite um e-mail para liberar"><button id="al-add" type="button">Liberar</button></div>
       </div>
+      <div class="adm-box">
+        <div class="adm-h">Músicas</div>
+        <p class="adm-note">Escolha vários arquivos ou uma pasta inteira. O aplicativo reconhece pelo nome: "cifra" vira cifra com troca de tom, "grade" ou "full score" vira grade completa, "partes" ou "banda" vira partes da banda, e MP3 vira o áudio. Antes de enviar, você confere tudo.</p>
+        <div class="row2">
+          <label class="btn-navy file-btn" style="flex:1">Escolher arquivos<input type="file" id="mu-files" multiple accept=".pdf,.mp3,.m4a,.wav,.aac,.ogg" hidden></label>
+          <label class="btn-navy file-btn" style="flex:1">Escolher pasta<input type="file" id="mu-dir" webkitdirectory multiple hidden></label>
+        </div>
+        <div id="mu-review"></div>
+        <div id="mu-list"></div>
+      </div>
       <div id="adm-pend"></div>
       <div class="adm-stats"><div><b id="st-total">0</b><span>mães cadastradas</span></div><div><b id="st-alunas">0</b><span>já são alunas</span></div><div><b id="st-semana">0</b><span>novas em 7 dias</span></div></div>
       <div class="adm-uf" id="adm-uf"></div>

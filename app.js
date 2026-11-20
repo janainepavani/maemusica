@@ -8,14 +8,18 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, serverTimestamp, increment,
-  writeBatch, getCountFromServer
+  writeBatch, getCountFromServer, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {
+  getStorage, ref as sref, uploadBytes, getDownloadURL, listAll, deleteObject
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
 import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js";
 
 const fb = initializeApp(firebaseConfig);
 const auth = getAuth(fb);
 auth.languageCode = "pt";
 const db = getFirestore(fb);
+const storage = getStorage(fb);
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -71,12 +75,28 @@ async function loadData() {
     fetch("data/musicas.json").then(r => r.json()),
     fetch("data/config.json").then(r => r.json())
   ]);
-  S.songs = songs.sort((a, b) => a.titulo.localeCompare(b.titulo, "pt")); S.cfg = cfg;
+  S.static = songs; S.songs = sortSongs(songs.slice()); S.cfg = cfg;
   const L = cfg.links;
   $$(".cta-curso").forEach(a => a.href = L.curso);
   $("#pend-whats").href = L.whatsapp;
   $("#lk-missao").href = L.missao; $("#lk-cursos").href = L.cursos; $("#lk-whats").href = L.whatsapp;
   $("#dest-t").textContent = cfg.destaque.titulo; $("#dest-p").textContent = cfg.destaque.texto;
+}
+const sortSongs = l => l.sort((a, b) => a.titulo.localeCompare(b.titulo, "pt"));
+// músicas enviadas pelo painel (Firestore) + as que vieram no próprio aplicativo; a do painel vale mais
+async function loadSongs() {
+  try {
+    const snap = await getDocs(collection(db, "songs"));
+    const fs = snap.docs.map(d => ({ id: d.id, storage: true, ...d.data() }));
+    const ids = new Set(fs.map(x => x.id));
+    S.songs = sortSongs(fs.concat(S.static.filter(x => !ids.has(x.id))));
+  } catch (e) { console.warn("músicas do painel", e); }
+}
+const urlCache = new Map();
+async function fileUrl(song, path) {
+  if (!song.storage || !path) return path;
+  if (!urlCache.has(path)) urlCache.set(path, getDownloadURL(sref(storage, path)));
+  return urlCache.get(path);
 }
 const dataReady = loadData().catch(e => { console.error(e); toast("Não consegui carregar as músicas. Verifique a internet."); });
 
@@ -196,7 +216,8 @@ async function enter() {
   const f = $("#f-prof");
   ["nome", "whats", "cidade", "uf", "grupo", "instr"].forEach(k => f.elements[k].value = p[k] || "");
   $("#go-admin").classList.toggle("hidden", !S.isAdmin);
-  renderPromos(); renderList(); route();
+  renderPromos(); renderList();
+  await loadSongs(); renderList(); route();
 }
 
 /* ---------- perfil ---------- */
@@ -238,22 +259,27 @@ const norm = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 const cifraCache = {};
 function renderList() {
   const q = norm($("#q").value.trim());
-  const txt = s => s.titulo + " " + s.autor + " " + (cifraCache[s.id] ? cifraCache[s.id][0].linhas.map(l => l.l || "").join(" ") : "");
+  const txt = s => {
+    if (!cifraCache[s.id] && s.cifraJson) try { cifraCache[s.id] = JSON.parse(s.cifraJson); } catch (e) {}
+    return s.titulo + " " + (s.autor || "") + " " + (cifraCache[s.id]?.[0] ? cifraCache[s.id][0].linhas.map(l => l.l || "").join(" ") : "");
+  };
   const hits = S.songs.filter(s => !q || norm(txt(s)).includes(q));
   const L = S.cfg.links;
   let h = hits.map((s, i) => `<button class="song" data-id="${esc(s.id)}" type="button">
       <div class="num">${i + 1}</div>
       <div><div class="t">${esc(s.titulo)}</div><div class="a">${esc(s.autor)}</div>
-      <div class="chips"><span class="chip">Cifra</span>${s.partituras?.length ? '<span class="chip">Partitura</span>' : ""}${s.youtube || s.audio ? '<span class="chip">Ouvir</span>' : ""}${s.curso ? '<span class="badge-aula">Tem aula no curso</span>' : ""}</div></div></button>`).join("");
+      <div class="chips">${s.cifra || s.cifraJson ? '<span class="chip">Cifra</span>' : ""}${s.partituras?.length ? '<span class="chip">Partitura</span>' : ""}${s.youtube || s.audio ? '<span class="chip">Ouvir</span>' : ""}${s.curso ? '<span class="badge-aula">Tem aula no curso</span>' : ""}</div></div></button>`).join("");
   if (!q) {
-    h += (S.cfg.emBreve || []).map(t => `<div class="song soon"><div class="num">·</div><div><div class="t">${esc(t)}</div><div class="a">Em breve</div></div></div>`).join("");
+    const have = new Set(S.songs.map(x => norm(x.titulo)));
+    h += (S.cfg.emBreve || []).filter(t => !have.has(norm(t))).map(t => `<div class="song soon"><div class="num">·</div><div><div class="t">${esc(t)}</div><div class="a">Em breve</div></div></div>`).join("");
   }
   $("#list").innerHTML = h || '<div class="empty">Nenhuma música encontrada.</div>';
   $$("#list .song[data-id]").forEach(b => b.onclick = () => openSong(b.dataset.id));
 }
 $("#q").addEventListener("input", renderList);
 // carrega as cifras em segundo plano para a busca por trecho da letra
-dataReady.then(() => S.songs.forEach(s => fetch(s.cifra).then(r => r.json()).then(v => { cifraCache[s.id] = v; }).catch(() => {})));
+dataReady.then(() => S.static.forEach(s => fetch(s.cifra).then(r => r.json()).then(v => { cifraCache[s.id] = v; }).catch(() => {})));
+const getCifra = async s => cifraCache[s.id] || (cifraCache[s.id] = s.cifraJson ? JSON.parse(s.cifraJson) : s.cifra ? await fetch(s.cifra).then(r => r.json()) : null);
 
 /* ---------- transposição ---------- */
 const SH = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -291,8 +317,9 @@ async function openSong(id, push = true) {
   if (push) history.pushState(null, "", "#musica-" + id);
   $("#cifra").innerHTML = '<span class="ly" style="color:var(--muted)">Carregando a cifra...</span>';
   try {
-    versions = cifraCache[id] || await fetch(cur.cifra).then(r => r.json());
-    cifraCache[id] = versions;
+    versions = await getCifra(cur);
+    if (!versions?.length) { $("#cifra").innerHTML = '<span class="ly" style="color:var(--muted)">Esta música ainda não tem cifra. Veja as partituras.</span>'; $("#s-meta").innerHTML = ""; $(".controls").classList.add("hidden"); return; }
+    $(".controls").classList.remove("hidden");
     const lv = [...new Set(versions.map(v => v.nivel))];
     if (!lv.includes(lvl)) lvl = lv[0];
     $$(".lvl button").forEach(b => { b.classList.toggle("on", b.dataset.lvl === lvl); b.classList.toggle("hidden", !lv.includes(b.dataset.lvl)); });
@@ -308,9 +335,10 @@ function renderListen() {
     const m = cur.youtube.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/);
     if (m) inner = `<iframe src="https://www.youtube-nocookie.com/embed/${m[1]}?rel=0" title="${esc(cur.titulo)}" loading="lazy" allow="encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
   } else if (cur.audio) {
-    inner = `<audio controls preload="none" src="${esc(cur.audio)}"></audio>`;
+    inner = `<audio controls preload="none" id="aud"></audio>`;
   }
   box.innerHTML = inner ? `<div class="listen"><button class="hd" type="button" id="listen-t">Ouvir a música <span>mostrar</span></button><div class="body hidden">${inner}</div></div>` : "";
+  if (cur.audio && !cur.youtube) { const s = cur; fileUrl(s, s.audio).then(u => { if (cur === s && $("#aud")) $("#aud").src = u; }).catch(() => {}); }
   if (inner) $("#listen-t").onclick = () => {
     const b = box.querySelector(".body"); b.classList.toggle("hidden");
     $("#listen-t span").textContent = b.classList.contains("hidden") ? "mostrar" : "esconder";
@@ -432,13 +460,15 @@ $("#seg-part").onclick = () => setPane("part");
 function renderSheets() {
   const ps = cur.partituras || [];
   $("#seg-part").classList.toggle("hidden", !ps.length);
-  $("#sheets").innerHTML = ps.map((p, i) => `<button class="sheet-card" data-i="${i}" type="button"><img src="${esc(p.paginas[0])}" alt="" loading="lazy"><div><div class="t">${esc(p.nome)}</div><div class="a">${esc(p.desc)} · ${p.paginas.length} ${p.paginas.length > 1 ? "páginas" : "página"}</div></div></button>`).join("");
+  $("#sheets").innerHTML = ps.map((p, i) => `<button class="sheet-card" data-i="${i}" type="button"><img data-src="${esc(p.paginas[0])}" alt="" loading="lazy"><div><div class="t">${esc(p.nome)}</div><div class="a">${esc(p.desc)} · ${p.paginas.length} ${p.paginas.length > 1 ? "páginas" : "página"}</div></div></button>`).join("");
   $$("#sheets .sheet-card").forEach(b => b.onclick = () => openViewer(ps[+b.dataset.i]));
+  const s = cur; $$("#sheets img[data-src]").forEach(img => fileUrl(s, img.dataset.src).then(u => img.src = u).catch(() => {}));
 }
 let zoom = 1;
 function openViewer(p) {
   zoom = 1; $("#v-title").textContent = p.nome;
-  $("#v-pages").innerHTML = p.paginas.map(src => `<img src="${esc(src)}" alt="">`).join("");
+  $("#v-pages").innerHTML = p.paginas.map(src => `<img data-src="${esc(src)}" alt="">`).join("");
+  const s = cur; $$("#v-pages img").forEach(img => fileUrl(s, img.dataset.src).then(u => img.src = u).catch(() => {}));
   applyZoom(); $("#viewer").classList.remove("hidden"); $("#float-cta").classList.add("hidden");
 }
 function applyZoom() { $$("#v-pages img").forEach(i => i.style.width = (zoom * 100) + "%"); }
@@ -464,7 +494,7 @@ async function loadAdmin() {
     await auth.currentUser.getIdToken(true);
     const snap = await getDocs(collection(db, "users"));
     ADM = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (tsDate(b.criadoEm) || 0) - (tsDate(a.criadoEm) || 0));
-    renderAdmin(); loadMode(); countAlunas();
+    renderAdmin(); loadMode(); countAlunas(); renderMusicAdmin();
   } catch (e) { console.error(e); $("#adm-list").innerHTML = '<div class="empty">Não consegui abrir os cadastros. Confira se as regras do Firestore foram publicadas.</div>'; }
 }
 function admFiltered() {
@@ -563,3 +593,91 @@ $("#adm-csv").onclick = () => {
 
 /* ---------- funciona sem internet ---------- */
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+
+/* ---------- músicas pelo painel ---------- */
+let lote = null, REVIEW = [];
+const loteMod = () => lote || (lote = import("./lote.js"));
+function renderMusicAdmin() {
+  const fsSongs = S.songs.filter(x => x.storage), stat = S.songs.filter(x => !x.storage);
+  const row = (x, edit) => `<div class="mu-row"><div><b>${esc(x.titulo)}</b><small>${[x.cifra || x.cifraJson ? "cifra" : "", x.partituras?.length ? x.partituras.length + (x.partituras.length > 1 ? " partituras" : " partitura") : "", x.youtube ? "YouTube" : x.audio ? "áudio" : ""].filter(Boolean).join(" · ") || "sem arquivos"}</small></div>${edit ? `<button type="button" data-ed="${esc(x.id)}">Editar</button><button type="button" data-rm="${esc(x.id)}">Remover</button>` : ""}</div>`;
+  $("#mu-list").innerHTML = (S.songs.length ? `<div class="mu-list-h">No aplicativo (${S.songs.length})</div>` : "") + fsSongs.map(x => row(x, true)).join("") + stat.map(x => row(x, false)).join("");
+  $$("#mu-list [data-ed]").forEach(b => b.onclick = () => editSong(S.songs.find(x => x.id === b.dataset.ed)));
+  $$("#mu-list [data-rm]").forEach(b => b.onclick = () => removeSong(S.songs.find(x => x.id === b.dataset.rm)));
+}
+async function pickFiles(list) {
+  if (!list.length) return;
+  const L = await loteMod();
+  REVIEW = L.groupFiles([...list], S.songs);
+  if (!REVIEW.length) return toast("Não encontrei PDF nem áudio nesses arquivos.");
+  renderReview();
+  for (const g of REVIEW) {
+    const c = g.files.find(x => x.type === "cifra");
+    if (c && !g.existe) {
+      const r = await L.peekCifra(c.file);
+      if (r?.titulo) g.titulo = r.titulo.replace(/\s+/g, " ").trim();
+      if (r?.autor && !g.autor) g.autor = r.autor;
+      if (r && !r.versoes) g.aviso = "Não reconheci os níveis e tons nesta cifra.";
+      renderReview();
+    }
+  }
+}
+$("#mu-files").onchange = e => { const l = [...e.target.files]; e.target.value = ""; pickFiles(l); };
+$("#mu-dir").onchange = e => { const l = [...e.target.files]; e.target.value = ""; pickFiles(l); };
+async function renderReview() {
+  const L = await loteMod();
+  if (!REVIEW.length) { $("#mu-review").innerHTML = ""; return; }
+  $("#mu-review").innerHTML = REVIEW.map((g, i) => `<div class="mu-card" data-g="${i}">
+      <div class="field"><label>Música${g.existe ? "" : '<span class="mu-new">nova</span>'}</label><input type="text" data-k="titulo" value="${esc(g.titulo)}"></div>
+      <div class="field"><label>Autor</label><input type="text" data-k="autor" value="${esc(g.autor)}"></div>
+      <div class="field"><label>Link do YouTube (se tiver)</label><input type="url" data-k="youtube" value="${esc(g.youtube)}" placeholder="https://youtu.be/..."></div>
+      <label class="mu-chk"><input type="checkbox" data-k="curso" ${g.curso ? "checked" : ""}> Tem aula no curso</label>
+      ${g.files.map((f, j) => `<div class="mu-file"><span>${esc(f.file.name)}</span><select data-f="${j}">${Object.entries(L.TYPE_LABEL).map(([k, v]) => `<option value="${k}" ${k === f.type ? "selected" : ""}>${v}</option>`).join("")}</select></div>`).join("")}
+      <div class="mu-status ${g.st || ""}">${esc(g.aviso || g.msg || "")}</div></div>`).join("")
+    + `<div class="mu-actions"><button class="mu-cancel" type="button" id="mu-cancel">Cancelar</button><button class="mu-send" type="button" id="mu-send">Enviar ${REVIEW.length} ${REVIEW.length > 1 ? "músicas" : "música"}</button></div>`;
+  $$("#mu-review .mu-card").forEach(card => {
+    const g = REVIEW[+card.dataset.g];
+    card.querySelectorAll("[data-k]").forEach(inp => inp.oninput = inp.onchange = () => { g[inp.dataset.k] = inp.type === "checkbox" ? inp.checked : inp.value; });
+    card.querySelectorAll("[data-f]").forEach(sel => sel.onchange = () => { g.files[+sel.dataset.f].type = sel.value; });
+  });
+  $("#mu-cancel").onclick = () => { REVIEW = []; renderReview(); };
+  $("#mu-send").onclick = sendAll;
+}
+async function sendAll() {
+  const L = await loteMod();
+  $("#mu-send").disabled = true; $("#mu-cancel").disabled = true;
+  let ok = 0;
+  for (const [i, g] of REVIEW.entries()) {
+    const st = $(`#mu-review .mu-card[data-g="${i}"] .mu-status`);
+    const log = t => { st.className = "mu-status"; st.textContent = t; };
+    g.files = g.files.filter(f => f.type !== "ignorar");
+    if (!g.titulo.trim()) { st.className = "mu-status bad"; st.textContent = "Falta o nome da música."; continue; }
+    try {
+      await L.sendSong(g, {
+        log,
+        upload: (path, blob, type) => uploadBytes(sref(storage, path), blob, { contentType: type }),
+        save: (id, data) => setDoc(doc(db, "songs", id), { ...data, updatedAt: serverTimestamp() }, { merge: true })
+      });
+      st.className = "mu-status ok"; st.textContent = "Enviada."; g.done = true; ok++;
+    } catch (e) { console.error(e); st.className = "mu-status bad"; st.textContent = "Não deu certo: " + (e.message || "tente de novo"); }
+  }
+  urlCache.clear(); Object.keys(cifraCache).forEach(k => delete cifraCache[k]);
+  await loadSongs(); renderList(); renderMusicAdmin();
+  REVIEW = REVIEW.filter(g => !g.done);
+  toast(ok + (ok === 1 ? " música enviada." : " músicas enviadas."));
+  if (REVIEW.length) renderReview(); else $("#mu-review").innerHTML = "";
+}
+function editSong(x) {
+  REVIEW = [{ id: x.id, titulo: x.titulo, autor: x.autor || "", youtube: x.youtube || "", curso: x.curso !== false, existe: true, files: [] }];
+  renderReview();
+  $("#mu-review").scrollIntoView({ behavior: "smooth", block: "start" });
+  toast("Mude o que quiser e toque em Enviar. Para trocar arquivos, escolha os novos PDFs.");
+}
+async function removeSong(x) {
+  const btn = $(`#mu-list [data-rm="${x.id}"]`);
+  if (btn.dataset.sure !== "1") { btn.dataset.sure = "1"; btn.textContent = "Tocar de novo para remover"; setTimeout(() => { if (btn.isConnected) { btn.dataset.sure = ""; btn.textContent = "Remover"; } }, 4000); return; }
+  try {
+    await deleteDoc(doc(db, "songs", x.id));
+    try { const all = await listAll(sref(storage, "songs/" + x.id)); await Promise.allSettled(all.items.map(deleteObject)); } catch (e) {}
+    await loadSongs(); renderList(); renderMusicAdmin(); toast(x.titulo + " removida.");
+  } catch (e) { console.error(e); toast("Não consegui remover. Tente de novo."); }
+}
