@@ -242,3 +242,23 @@ input,select{font:inherit}
 .mu-row small{color:var(--muted)}
 .mu-row button{padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--navy);font-size:13px}
 .mu-list-h{font-weight:700;color:var(--navy);margin:16px 0 4px;font-size:15px}
+
+.carousel{margin:0 -16px 18px;position:relative}
+.car-track{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.car-track::-webkit-scrollbar{display:none}
+.car-track .promo{flex:0 0 calc(100% - 28px);scroll-snap-align:center;margin:0;display:flex}
+.car-track .promo .in{display:flex;flex-direction:column;width:100%}
+.car-track .promo .cta{align-self:flex-start;margin-top:auto}
+.car-track .promo p{margin-bottom:12px}
+.car-dots{display:flex;justify-content:center;gap:6px;margin-top:10px}
+.car-dots span{width:7px;height:7px;border-radius:50%;background:#D8D1BF;transition:all .2s}
+.car-dots span.on{background:var(--gold);width:18px;border-radius:4px}
+#list-promo .promo{margin-top:8px}
+.course{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:12px}
+.course .k{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-dark);font-weight:700}
+.course h3{color:var(--navy);font-size:19px;margin-top:6px;font-weight:700;line-height:1.25}
+.course p{color:var(--ink);font-size:15px;line-height:1.55;margin-top:8px}
+.course ul{margin:10px 0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
+.course a{display:block;text-align:center;margin-top:14px;padding:13px;border-radius:12px;background:var(--navy);color:#fff;text-decoration:none;font-weight:700}
+.course.feat{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+.course.feat a{background:var(--gold);color:var(--navy-deep)}

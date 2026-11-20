@@ -71,16 +71,17 @@ window.addEventListener("popstate", route);
 
 /* ---------- dados ---------- */
 async function loadData() {
-  const [songs, cfg] = await Promise.all([
+  const [songs, cfg, cursos] = await Promise.all([
     fetch("data/musicas.json").then(r => r.json()),
-    fetch("data/config.json").then(r => r.json())
+    fetch("data/config.json").then(r => r.json()),
+    fetch("data/cursos.json").then(r => r.json())
   ]);
+  S.cursos = cursos;
   S.static = songs; S.songs = sortSongs(songs.slice()); S.cfg = cfg;
   const L = cfg.links;
   $$(".cta-curso").forEach(a => a.href = L.curso);
   $("#pend-whats").href = L.whatsapp;
-  $("#lk-missao").href = L.missao; $("#lk-cursos").href = L.cursos; $("#lk-whats").href = L.whatsapp;
-  $("#dest-t").textContent = cfg.destaque.titulo; $("#dest-p").textContent = cfg.destaque.texto;
+  $("#lk-whats").href = L.whatsapp;
 }
 const sortSongs = l => l.sort((a, b) => a.titulo.localeCompare(b.titulo, "pt"));
 // músicas enviadas pelo painel (Firestore) + as que vieram no próprio aplicativo; a do painel vale mais
@@ -239,19 +240,48 @@ $("#adm-back").onclick = () => go("prof");
 
 /* ---------- chamadas para os cursos ---------- */
 const isAluna = () => S.profile?.aluna === "sim";
-function promoHTML() {
-  const L = S.cfg.links;
-  if (isAluna()) return `<a class="promo aluna" href="${L.nutror}" target="_blank" rel="noopener"><div class="in">
-    <div class="k">Área da aluna</div><h3>Continue suas aulas</h3><p>Entre direto nos seus cursos, sem procurar link.</p><span class="cta">Entrar nas minhas aulas ›</span></div></a>`;
-  return `<a class="promo" href="${L.curso}" target="_blank" rel="noopener"><div class="in">
-    <div class="k">Curso em destaque</div><h3>Aprenda estas músicas <b>de verdade</b></h3>
-    <p>Melodia, teclado, violão e harmonia vocal, uma música por vez, em aulas curtas.</p><span class="cta">Conhecer o curso ›</span></div></a>`;
+// banners: um curso por banner, cada um com um detalhe dele; ao tocar, vai direto para a compra
+const pick = a => a[Math.floor(Math.random() * a.length)];
+function bannerHTML(c, b) {
+  return `<a class="promo" href="${esc(c.link)}" target="_blank" rel="noopener"><div class="in">
+    <div class="k">${esc(c.curto)}</div><h3>${esc(b.h)}</h3><p>${esc(b.p)}</p><span class="cta">${esc(c.botao || "Quero me inscrever")} ›</span></div></a>`;
 }
+let carT = null;
 function renderPromos() {
   const L = S.cfg.links;
-  $("#home-promo").innerHTML = promoHTML();
-  $("#study-top").innerHTML = isAluna() ? promoHTML()
+  const comBanner = S.cursos.filter(c => c.banners.length);
+  // o curso atual primeiro; os outros em ordem diferente a cada visita
+  const [first, ...rest] = comBanner;
+  const ordem = [first, ...rest.sort(() => Math.random() - .5)];
+  const escolhidos = ordem.map(c => [c, pick(c.banners)]);
+  $("#car-track").innerHTML = escolhidos.map(([c, b]) => bannerHTML(c, b)).join("");
+  $("#car-dots").innerHTML = escolhidos.map((_, i) => `<span${i ? "" : ' class="on"'}></span>`).join("");
+  // um segundo banner no fim da lista, de outro curso, com outro detalhe
+  const outro = ordem[1 + Math.floor(Math.random() * (ordem.length - 1))];
+  const outroB = outro.banners.length > 1 ? outro.banners.find(b => b !== escolhidos.find(x => x[0] === outro)[1]) : outro.banners[0];
+  $("#list-promo").innerHTML = bannerHTML(outro, outroB);
+  // aba Aprofunde seu estudo
+  $("#study-top").innerHTML = isAluna()
+    ? `<a class="promo aluna" href="${L.nutror}" target="_blank" rel="noopener" style="margin-bottom:14px"><div class="in"><div class="k">Área da aluna</div><h3>Continue suas aulas</h3><p>Entre direto nos seus cursos na Nutror, com o seu e-mail e senha.</p><span class="cta">Entrar nas minhas aulas ›</span></div></a>`
     : `<a class="nutror" href="${L.nutror}" target="_blank" rel="noopener" style="margin:0 0 14px"><div><b>Já é aluna?</b><br><span>Entre nas suas aulas na Nutror</span></div><div style="font-size:22px;color:var(--gold)">›</div></a>`;
+  $("#study-list").innerHTML = S.cursos.map((c, i) => `<div class="course${i ? "" : " feat"}">
+      ${c.selo ? `<div class="k">${esc(c.selo)}</div>` : ""}<h3>${esc(c.nome)}</h3><p>${esc(c.texto)}</p>
+      ${c.detalhes.length ? `<ul>${c.detalhes.map(d => `<li>${esc(d)}</li>`).join("")}</ul>` : ""}
+      <a href="${esc(c.link)}" target="_blank" rel="noopener">${esc(c.botao || "Quero me inscrever")}</a></div>`).join("");
+  startCarousel();
+}
+function startCarousel() {
+  const track = $("#car-track"), dots = $$("#car-dots span");
+  const idx = () => Math.round(track.scrollLeft / (track.firstElementChild?.offsetWidth + 10 || 1));
+  track.onscroll = () => { const i = idx(); dots.forEach((d, j) => d.classList.toggle("on", j === i)); };
+  clearInterval(carT);
+  let paused = false;
+  track.onpointerdown = track.ontouchstart = () => { paused = true; setTimeout(() => paused = false, 12000); };
+  carT = setInterval(() => {
+    if (paused || $("#v-home").classList.contains("hidden") || !track.children.length) return;
+    const i = (idx() + 1) % track.children.length;
+    track.scrollTo({ left: track.children[i].offsetLeft - 16, behavior: "smooth" });
+  }, 6000);
 }
 
 /* ---------- lista ---------- */

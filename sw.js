@@ -1,10 +1,10 @@
 // Guarda o aplicativo, as cifras, as partituras e os áudios já abertos, para funcionar sem internet.
 // Com internet, busca sempre a versão mais nova; sem internet, usa a guardada.
-const CACHE = "maemusica-v4";
+const CACHE = "maemusica-v5";
 const SDK = "https://www.gstatic.com/firebasejs/10.14.1/";
 const SHELL = [
   "./", "./index.html", "./styles.css", "./app.js", "./cifra.js", "./firebase-config.js", "./manifest.webmanifest",
-  "./data/musicas.json", "./data/config.json",
+  "./data/musicas.json", "./data/config.json", "./data/cursos.json",
   "./assets/fundo.jpg", "./assets/logo-maes.png", "./assets/logo-p.png",
   "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png",
   SDK + "firebase-app.js", SDK + "firebase-auth.js", SDK + "firebase-firestore.js", SDK + "firebase-storage.js"

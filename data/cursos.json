@@ -1,0 +1,161 @@
+[
+  {
+    "id": "repertorio",
+    "nome": "Repertório das Mães que Oram na Prática · Volume 1",
+    "curto": "Repertório na Prática",
+    "selo": "Curso atual",
+    "link": "https://chk.eduzz.com/D0R88QR69Y",
+    "texto": "As músicas do movimento, uma a uma. Cada música vem com aulas curtas de melodia, teclado e violão em três níveis e harmonia vocal, voz por voz. Você recebe as partituras e as cifras de tudo o que estuda.",
+    "detalhes": [
+      "Teclado e violão em três níveis: iniciante, intermediário e o arranjo original",
+      "Primeira, segunda e terceira voz, uma aula para cada",
+      "Fica Conosco, Oração pela Família, Terço da Eucaristia, Bela Senhora e Espírito de Deus, Ensina-me"
+    ],
+    "banners": [
+      {
+        "h": "Cada música em três níveis de teclado e de violão",
+        "p": "Do iniciante ao arranjo original. Você escolhe por onde começar."
+      },
+      {
+        "h": "A harmonia vocal ensinada voz por voz",
+        "p": "Primeira, segunda e terceira voz, com uma aula para cada uma."
+      },
+      {
+        "h": "Aulas curtas, uma música de cada vez",
+        "p": "Fica Conosco, Oração pela Família, Terço da Eucaristia e mais."
+      }
+    ]
+  },
+  {
+    "id": "cantoras",
+    "nome": "Curso para Cantoras",
+    "curto": "Curso para Cantoras",
+    "link": "https://sun.eduzz.com/6W484QDA0Z",
+    "texto": "Seis aulas para quem canta no grupo, com professoras convidadas que vivem a música no palco e no ministério, e uma aula com a Janaine sobre os equipamentos de som.",
+    "detalhes": [
+      "Aulas com Ziza Fernandes, Adriana Arydes e Beth Lopes",
+      "Saúde da voz com a fonoaudióloga Denise Pimentel",
+      "Microfone, caixa de som e mesa explicados com calma"
+    ],
+    "banners": [
+      {
+        "h": "Ziza Fernandes, Adriana Arydes e Beth Lopes como professoras",
+        "p": "Cada convidada ensina o que aprendeu cantando no palco e no ministério."
+      },
+      {
+        "h": "Uma aula inteira sobre a saúde da sua voz",
+        "p": "Com a fonoaudióloga Denise Pimentel."
+      },
+      {
+        "h": "Microfone, caixa de som e mesa sem mistério",
+        "p": "Uma aula só sobre equipamentos de som, com a Janaine."
+      }
+    ]
+  },
+  {
+    "id": "formacao1",
+    "nome": "Formação Musical 1",
+    "curto": "Formação Musical 1",
+    "link": "https://chk.eduzz.com/801VRO2A97",
+    "texto": "Teoria musical desde o começo, com rigor e sem pressa. Cada conteúdo é aprendido em cima das músicas que vocês já cantam no movimento.",
+    "detalhes": [
+      "Para quem nunca estudou música",
+      "Ritmo, notas, escalas e acordes, aula por aula",
+      "Tudo aplicado nas músicas do movimento"
+    ],
+    "banners": [
+      {
+        "h": "Ler partitura começa por aqui",
+        "p": "Teoria musical do zero, aprendida com as músicas do movimento."
+      },
+      {
+        "h": "Entenda o que você canta e toca",
+        "p": "Ritmo, notas e acordes explicados com calma, aula por aula."
+      }
+    ]
+  },
+  {
+    "id": "formacao2",
+    "nome": "Formação Musical 2",
+    "curto": "Formação Musical 2",
+    "link": "https://chk.eduzz.com/39YDJGQ39O",
+    "texto": "A continuação da Formação Musical 1. A teoria avança e chegam músicas novas do repertório, como Oração de Louvor.",
+    "detalhes": [
+      "Para quem terminou a Formação Musical 1",
+      "Músicas novas, como Oração de Louvor"
+    ],
+    "banners": [
+      {
+        "h": "Terminou a Formação Musical 1? A próxima etapa já está pronta",
+        "p": "A teoria continua, agora com músicas novas como Oração de Louvor."
+      }
+    ]
+  },
+  {
+    "id": "teclado1",
+    "nome": "Teclado 1",
+    "curto": "Teclado 1",
+    "link": "https://chk.eduzz.com/R9JJ7R5Z9X",
+    "texto": "O teclado desde a primeira aula, para acompanhar o seu grupo com as músicas do movimento.",
+    "detalhes": [
+      "Começa do zero",
+      "Acordes que já servem para as músicas do grupo",
+      "O curso continua em outros módulos gravados"
+    ],
+    "banners": [
+      {
+        "h": "Acompanhar o seu grupo no teclado",
+        "p": "Do zero, com acordes que já servem para as músicas do movimento."
+      }
+    ]
+  },
+  {
+    "id": "violao1",
+    "nome": "Violão 1",
+    "curto": "Violão 1",
+    "link": "https://chk.eduzz.com/6W48X7B60Z",
+    "texto": "O violão desde a primeira aula, com as músicas que o seu grupo já canta.",
+    "detalhes": [
+      "Começa do zero",
+      "Primeiros acordes e batidas",
+      "O curso continua em outros módulos gravados"
+    ],
+    "banners": [
+      {
+        "h": "Seus primeiros acordes no violão",
+        "p": "Do zero, tocando as músicas que o seu grupo já canta."
+      }
+    ]
+  },
+  {
+    "id": "missao",
+    "nome": "Missão Recomeçar",
+    "curto": "Missão Recomeçar",
+    "selo": "Caminho guiado",
+    "link": "https://www.janainepavani.com/missaorecomecar",
+    "botao": "Conhecer a Missão",
+    "texto": "Para quem comprou um curso e parou no meio. Um cronograma pronto, com aulas de poucos minutos por dia e tira-dúvidas ao vivo a cada quinze dias. Quem já é aluna participa sem pagar nada a mais.",
+    "detalhes": [
+      "Uns 20 minutos de estudo por dia",
+      "Tira-dúvidas ao vivo a cada quinze dias",
+      "Sem custo para quem já comprou o curso"
+    ],
+    "banners": [
+      {
+        "h": "Parou no meio do curso? Dá para recomeçar",
+        "p": "Uns 20 minutos por dia, cronograma pronto e tira-dúvidas ao vivo a cada quinze dias."
+      }
+    ]
+  },
+  {
+    "id": "outros",
+    "nome": "Outros cursos completos",
+    "curto": "Cursos completos",
+    "selo": "No seu tempo",
+    "link": "https://www.janainepavani.com/maes",
+    "botao": "Ver os cursos",
+    "texto": "Técnica Vocal, Harmonia Vocal e os módulos seguintes de Teclado, Violão e Formação Musical, para aprender do zero ou aprofundar, quando e como quiser.",
+    "detalhes": [],
+    "banners": []
+  }
+]
