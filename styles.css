@@ -202,3 +202,20 @@ input,select{font:inherit}
 .verify{background:#FFF6DA;border:1px solid var(--gold);border-radius:12px;padding:14px;color:var(--ink);font-size:15px;line-height:1.5;margin-bottom:14px}
 .verify button{margin-top:10px;padding:10px 14px;border-radius:10px;background:var(--navy);color:#fff}
 @media (min-width:700px){ .cifra{font-size:16px} }
+
+.pend p{color:#d5deeb;font-size:16px;line-height:1.55;margin-bottom:12px}
+.pend p b{color:#fff;word-break:break-all}
+.pend .btn-gold{display:block;text-align:center;text-decoration:none;margin-top:14px}
+.btn-line{display:block;text-align:center;text-decoration:none;margin-top:10px;padding:14px;border-radius:12px;border:1px solid var(--gold);color:var(--gold-soft);font-weight:500}
+.adm-box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.adm-h{font-weight:700;color:var(--navy);margin-bottom:10px}
+.adm-h span{font-weight:500;color:var(--muted);font-size:14px}
+.adm-note{font-size:14px;color:var(--muted);line-height:1.5;margin:10px 0}
+.adm-mode{min-width:0}
+.file-btn{display:block;text-align:center;cursor:pointer}
+.adm-add{display:flex;gap:8px;margin-top:10px}
+.adm-add input{flex:1;min-width:0;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);font-size:15px}
+.adm-add button,.adm-row .lib{padding:10px 14px;border-radius:10px;background:var(--gold);color:var(--navy-deep);font-weight:700}
+.adm-row .lib{margin-top:8px}
+.tag-pend{font-size:11px;padding:2px 8px;border-radius:20px;background:#F3D9CF;color:#7A2E14;font-weight:700;margin-left:6px}
+.pend-box{border:1.5px solid #E7B9A6;background:#FFF7F3}

@@ -9,11 +9,13 @@ service cloud.firestore {
         && request.auth.token.email == 'janaine@janainepavani.com'
         && request.auth.token.email_verified == true;
     }
-    function profileFields() {
-      return ['nome', 'email', 'whats', 'cidade', 'uf', 'grupo', 'instr', 'aluna', 'criadoEm', 'ultimoAcesso', 'acessos'];
+    function inList() { return exists(/databases/$(database)/documents/alunas/$(myEmail())); }
+    function isOpen() {
+      return exists(/databases/$(database)/documents/config/acesso)
+        && get(/databases/$(database)/documents/config/acesso).data.modo == 'aberto';
     }
     function validProfile(d) {
-      return d.keys().hasOnly(profileFields())
+      return d.keys().hasOnly(['nome', 'email', 'whats', 'cidade', 'uf', 'grupo', 'instr', 'aluna', 'status', 'criadoEm', 'ultimoAcesso', 'acessos'])
         && d.nome is string && d.nome.size() > 0 && d.nome.size() <= 120
         && d.email == myEmail()
         && d.whats is string && d.whats.size() <= 40
@@ -21,17 +23,38 @@ service cloud.firestore {
         && d.uf is string && d.uf.size() <= 2
         && d.grupo is string && d.grupo.size() <= 120
         && d.instr is string && d.instr.size() <= 40
-        && d.aluna in ['sim', 'nao'];
+        && d.aluna in ['sim', 'nao']
+        && d.status in ['ativa', 'pendente'];
+    }
+    // aluna só com o e-mail na lista; entrar só sendo aluna ou com o aplicativo aberto
+    function validAccess(d) {
+      return (d.aluna == 'nao' || inList())
+        && (d.status == 'pendente' || inList() || isOpen());
     }
 
     // Cadastro de cada mãe: ela lê e edita só o próprio; a Janaine vê todos
     match /users/{uid} {
       allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
-      allow create: if signedIn() && request.auth.uid == uid && validProfile(request.resource.data);
+      allow create: if signedIn() && request.auth.uid == uid
+        && validProfile(request.resource.data) && validAccess(request.resource.data);
       allow update: if isAdmin()
-        || (signedIn() && request.auth.uid == uid && validProfile(request.resource.data)
-            && request.resource.data.email == resource.data.email);
+        || (signedIn() && request.auth.uid == uid
+            && validProfile(request.resource.data)
+            && request.resource.data.email == resource.data.email
+            && validAccess(request.resource.data));
       allow delete: if isAdmin();
+    }
+
+    // Lista de alunas (e-mails): cada mãe só confere o próprio; a Janaine importa e libera
+    match /alunas/{email} {
+      allow read: if isAdmin() || (signedIn() && email == myEmail());
+      allow write: if isAdmin();
+    }
+
+    // Quem pode entrar: "alunas" ou "aberto"
+    match /config/{doc} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
     }
   }
 }

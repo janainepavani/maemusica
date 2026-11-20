@@ -7,7 +7,8 @@ import {
   sendPasswordResetEmail, sendEmailVerification, signOut
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, serverTimestamp, increment
+  getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, serverTimestamp, increment,
+  writeBatch, getCountFromServer
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js";
 
@@ -33,11 +34,11 @@ $$(".uf-select").forEach(s => s.innerHTML = '<option value="">UF</option>' + UFS
 $$(".instr-select").forEach(s => s.innerHTML = '<option value="">Escolha</option>' + INSTR.map(u => `<option>${u}</option>`).join(""));
 
 /* ---------- telas ---------- */
-const VIEWS = { loading: "#v-loading", auth: "#v-auth", home: "#v-home", study: "#v-study", prof: "#v-prof", song: "#v-song", admin: "#v-admin" };
+const VIEWS = { loading: "#v-loading", auth: "#v-auth", pending: "#v-pending", home: "#v-home", study: "#v-study", prof: "#v-prof", song: "#v-song", admin: "#v-admin" };
 const HASH = { home: "", study: "cursos", prof: "perfil", admin: "painel" };
 function show(v) {
   Object.entries(VIEWS).forEach(([k, s]) => $(s).classList.toggle("hidden", k !== v));
-  const inApp = !["loading", "auth"].includes(v);
+  const inApp = !["loading", "auth", "pending"].includes(v);
   $("#nav").classList.toggle("hidden", !inApp);
   $$(".nav button").forEach(b => b.classList.toggle("on", b.dataset.go === v || (v === "song" && b.dataset.go === "home") || (v === "admin" && b.dataset.go === "prof")));
   $("#float-cta").classList.toggle("hidden", !(v === "song" && cur?.curso));
@@ -73,6 +74,7 @@ async function loadData() {
   S.songs = songs.sort((a, b) => a.titulo.localeCompare(b.titulo, "pt")); S.cfg = cfg;
   const L = cfg.links;
   $$(".cta-curso").forEach(a => a.href = L.curso);
+  $("#pend-whats").href = L.whatsapp;
   $("#lk-missao").href = L.missao; $("#lk-cursos").href = L.cursos; $("#lk-whats").href = L.whatsapp;
   $("#dest-t").textContent = cfg.destaque.titulo; $("#dest-p").textContent = cfg.destaque.texto;
 }
@@ -103,7 +105,7 @@ const errMsg = e => ERR[e?.code] || "Não deu certo agora. Tente de novo em inst
 function profileFrom(d, email) {
   return {
     nome: d.nome.trim(), email, whats: d.whats.trim(), cidade: d.cidade.trim(), uf: d.uf,
-    grupo: d.grupo.trim(), instr: d.instr, aluna: d.aluna
+    grupo: d.grupo.trim(), instr: d.instr
   };
 }
 let pendingProfile = null;
@@ -135,10 +137,26 @@ $("#f-complete").addEventListener("submit", async e => {
   try { await saveNewProfile(profileFrom(d, S.user.email.toLowerCase())); enter(); }
   catch (err) { console.error(err); $("#err-complete").textContent = "Não consegui salvar. Tente de novo."; }
 });
+// Acesso: quem está na lista de alunas entra como aluna; com o aplicativo aberto para todas, as outras também entram.
+async function accessFor(email) {
+  const [al, cfg] = await Promise.all([
+    getDoc(doc(db, "alunas", email)).then(x => x.exists()).catch(() => false),
+    getDoc(doc(db, "config", "acesso")).then(x => x.exists() ? x.data().modo : "alunas").catch(() => "alunas")
+  ]);
+  return { aluna: al ? "sim" : "nao", status: (al || cfg === "aberto") ? "ativa" : "pendente" };
+}
 async function saveNewProfile(p) {
+  Object.assign(p, await accessFor(p.email));
   p.criadoEm = serverTimestamp(); p.ultimoAcesso = serverTimestamp(); p.acessos = 1;
   await setDoc(doc(db, "users", S.user.uid), p);
   S.profile = p;
+}
+async function refreshAccess(ref) {
+  const a = await accessFor(S.profile.email);
+  if (a.aluna !== S.profile.aluna || a.status !== S.profile.status) {
+    await updateDoc(ref, a).catch(e => console.warn(e));
+    Object.assign(S.profile, a);
+  }
 }
 
 onAuthStateChanged(auth, async user => {
@@ -150,6 +168,7 @@ onAuthStateChanged(auth, async user => {
     const snap = await getDoc(ref);
     if (snap.exists()) {
       S.profile = snap.data();
+      await refreshAccess(ref);
       updateDoc(ref, { ultimoAcesso: serverTimestamp(), acessos: increment(1) }).catch(() => {});
     } else if (pendingProfile) {
       await saveNewProfile(pendingProfile); pendingProfile = null;
@@ -169,10 +188,13 @@ onAuthStateChanged(auth, async user => {
 async function enter() {
   await dataReady;
   const p = S.profile;
+  if (p.status !== "ativa" && !S.isAdmin) {
+    $("#pend-email").textContent = p.email; show("pending"); return;
+  }
   $("#hello").textContent = "Olá, " + p.nome.split(" ")[0];
   $("#p-name").textContent = p.nome;
   const f = $("#f-prof");
-  ["nome", "whats", "cidade", "uf", "grupo", "instr", "aluna"].forEach(k => f.elements[k].value = p[k] || "");
+  ["nome", "whats", "cidade", "uf", "grupo", "instr"].forEach(k => f.elements[k].value = p[k] || "");
   $("#go-admin").classList.toggle("hidden", !S.isAdmin);
   renderPromos(); renderList(); route();
 }
@@ -181,10 +203,15 @@ async function enter() {
 $("#f-prof").addEventListener("submit", async e => {
   e.preventDefault();
   const d = Object.fromEntries(new FormData(e.target));
-  const upd = { nome: d.nome.trim(), whats: d.whats.trim(), cidade: d.cidade.trim(), uf: d.uf, grupo: d.grupo.trim(), instr: d.instr, aluna: d.aluna };
+  const upd = { nome: d.nome.trim(), whats: d.whats.trim(), cidade: d.cidade.trim(), uf: d.uf, grupo: d.grupo.trim(), instr: d.instr };
   try { await updateDoc(doc(db, "users", S.user.uid), upd); Object.assign(S.profile, upd); $("#p-name").textContent = upd.nome; renderPromos(); renderList(); toast("Cadastro atualizado."); }
   catch (err) { console.error(err); toast("Não consegui salvar. Tente de novo."); }
 });
+$("#pend-out").onclick = () => $("#logout").onclick();
+$("#pend-retry").onclick = async () => {
+  try { await refreshAccess(doc(db, "users", S.user.uid)); } catch (e) {}
+  if (S.profile.status === "ativa") enter(); else toast("Ainda não encontrei seu e-mail na lista. Fale com a Janaine.");
+};
 $("#logout").onclick = async () => { await signOut(auth); history.replaceState(null, "", location.pathname); authTab("login"); };
 $("#go-admin").onclick = () => go("admin");
 $("#adm-back").onclick = () => go("prof");
@@ -438,12 +465,12 @@ async function loadAdmin() {
     await auth.currentUser.getIdToken(true);
     const snap = await getDocs(collection(db, "users"));
     ADM = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (tsDate(b.criadoEm) || 0) - (tsDate(a.criadoEm) || 0));
-    renderAdmin();
+    renderAdmin(); loadMode(); countAlunas();
   } catch (e) { console.error(e); $("#adm-list").innerHTML = '<div class="empty">Não consegui abrir os cadastros. Confira se as regras do Firestore foram publicadas.</div>'; }
 }
 function admFiltered() {
   const q = norm($("#adm-q").value.trim()), f = $("#adm-f").value;
-  return ADM.filter(u => (!f || u.aluna === f) && (!q || norm([u.nome, u.cidade, u.uf, u.grupo, u.email].join(" ")).includes(q)));
+  return ADM.filter(u => (!f || (f === "pendente" ? u.status === "pendente" : u.aluna === f)) && (!q || norm([u.nome, u.cidade, u.uf, u.grupo, u.email].join(" ")).includes(q)));
 }
 function renderAdmin() {
   const week = Date.now() - 7 * 864e5;
@@ -456,17 +483,77 @@ function renderAdmin() {
   $("#adm-list").innerHTML = rows.map(u => {
     const w = (u.whats || "").replace(/\D/g, "");
     const wa = w ? `https://wa.me/${w.length <= 11 ? "55" + w : w}` : "";
-    return `<div class="adm-row"><b>${esc(u.nome)}</b>${u.aluna === "sim" ? '<span class="tag-aluna">aluna</span>' : ""}<br>
+    return `<div class="adm-row${u.status === "pendente" ? " pend-box" : ""}"><b>${esc(u.nome)}</b>${u.aluna === "sim" ? '<span class="tag-aluna">aluna</span>' : ""}${u.status === "pendente" ? '<span class="tag-pend">aguardando</span>' : ""}<br>
       <span class="m">${esc(u.grupo)} · ${esc(u.cidade)}/${esc(u.uf)} · ${esc(u.instr)}</span><br>
       ${esc(u.email)} · ${wa ? `<a href="${wa}" target="_blank" rel="noopener">${esc(u.whats)}</a>` : esc(u.whats)}<br>
-      <span class="m">Cadastro ${fmt(tsDate(u.criadoEm))} · último acesso ${fmt(tsDate(u.ultimoAcesso))} · ${u.acessos || 1} acessos</span></div>`;
+      <span class="m">Cadastro ${fmt(tsDate(u.criadoEm))} · último acesso ${fmt(tsDate(u.ultimoAcesso))} · ${u.acessos || 1} acessos</span>
+      ${u.aluna !== "sim" ? `<br><button class="lib" type="button" data-lib="${esc(u.id)}">Liberar como aluna</button>` : ""}</div>`;
   }).join("") || '<div class="empty">Nenhum cadastro encontrado.</div>';
+  $$("#adm-list [data-lib]").forEach(b => b.onclick = () => liberar(ADM.find(u => u.id === b.dataset.lib)));
+  const np = ADM.filter(u => u.status === "pendente").length;
+  $("#adm-pend").innerHTML = np ? `<div class="verify">${np} ${np > 1 ? "mães aguardam" : "mãe aguarda"} liberação. Escolha "Aguardando liberação" no filtro para ver.</div>` : "";
 }
+async function liberar(u) {
+  try {
+    await setDoc(doc(db, "alunas", u.email), { em: serverTimestamp(), origem: "manual" });
+    await updateDoc(doc(db, "users", u.id), { aluna: "sim", status: "ativa" });
+    u.aluna = "sim"; u.status = "ativa"; renderAdmin(); countAlunas(); toast(u.nome.split(" ")[0] + " liberada.");
+  } catch (e) { console.error(e); toast("Não consegui liberar. Tente de novo."); }
+}
+async function countAlunas() {
+  try { const c = await getCountFromServer(collection(db, "alunas")); $("#al-count").textContent = "· " + c.data().count + " e-mails"; } catch (e) {}
+}
+async function loadMode() {
+  let modo = "alunas";
+  try { const x = await getDoc(doc(db, "config", "acesso")); if (x.exists()) modo = x.data().modo; } catch (e) {}
+  showMode(modo);
+}
+function showMode(modo) {
+  $$(".adm-mode button").forEach(b => b.classList.toggle("on", b.dataset.modo === modo));
+  $("#mode-note").textContent = modo === "aberto"
+    ? "Qualquer mãe que se cadastrar entra. As alunas da lista continuam reconhecidas como alunas."
+    : "Só entra quem está na lista de alunas. As outras ficam aguardando, e você libera aqui.";
+}
+$$(".adm-mode button").forEach(b => b.onclick = async () => {
+  const modo = b.dataset.modo;
+  try { await setDoc(doc(db, "config", "acesso"), { modo, em: serverTimestamp() }); showMode(modo); toast(modo === "aberto" ? "Aplicativo aberto para todas as mães." : "Aplicativo só para alunas."); }
+  catch (e) { console.error(e); toast("Não consegui mudar. Tente de novo."); }
+});
+async function importEmails(list, origem) {
+  for (let i = 0; i < list.length; i += 400) {
+    const batch = writeBatch(db);
+    list.slice(i, i + 400).forEach(em => batch.set(doc(db, "alunas", em), { em: serverTimestamp(), origem }));
+    await batch.commit();
+  }
+  // quem já tinha se cadastrado e está na lista nova passa a aluna
+  const set = new Set(list);
+  for (const u of ADM.filter(u => set.has(u.email) && u.aluna !== "sim")) {
+    await updateDoc(doc(db, "users", u.id), { aluna: "sim", status: "ativa" }).catch(() => {});
+    u.aluna = "sim"; u.status = "ativa";
+  }
+  renderAdmin(); countAlunas();
+}
+$("#al-file").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  const txt = await f.text();
+  const list = [...new Set((txt.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) || []).map(x => x.toLowerCase()))];
+  e.target.value = "";
+  if (!list.length) return toast("Não encontrei e-mails nesse arquivo.");
+  toast(`Importando ${list.length} e-mails...`);
+  try { await importEmails(list, "planilha"); toast(`${list.length} e-mails na lista de alunas.`); }
+  catch (err) { console.error(err); toast("A importação parou no meio. Tente de novo, quem já entrou não duplica."); }
+};
+$("#al-add").onclick = async () => {
+  const em = $("#al-one").value.trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) return toast("Confira o e-mail.");
+  try { await importEmails([em], "manual"); $("#al-one").value = ""; toast(em + " liberado."); }
+  catch (err) { console.error(err); toast("Não consegui liberar. Tente de novo."); }
+};
 $("#adm-q").addEventListener("input", renderAdmin);
 $("#adm-f").addEventListener("change", renderAdmin);
 $("#adm-csv").onclick = () => {
-  const cols = ["nome", "email", "whats", "cidade", "uf", "grupo", "instr", "aluna", "criadoEm", "ultimoAcesso", "acessos"];
-  const head = ["Nome", "E-mail", "WhatsApp", "Cidade", "UF", "Grupo", "Instrumento", "Aluna", "Cadastro", "Último acesso", "Acessos"];
+  const cols = ["nome", "email", "whats", "cidade", "uf", "grupo", "instr", "aluna", "status", "criadoEm", "ultimoAcesso", "acessos"];
+  const head = ["Nome", "E-mail", "WhatsApp", "Cidade", "UF", "Grupo", "Instrumento", "Aluna", "Situação", "Cadastro", "Último acesso", "Acessos"];
   const cell = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
   const lines = [head.map(cell).join(";")].concat(admFiltered().map(u => cols.map(c => cell(c === "criadoEm" || c === "ultimoAcesso" ? fmt(tsDate(u[c])) : c === "aluna" ? (u.aluna === "sim" ? "sim" : "não") : u[c])).join(";")));
   const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });

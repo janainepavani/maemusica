@@ -49,8 +49,6 @@
         </div>
         <div class="field"><label for="n-grupo">Nome do seu grupo</label><input id="n-grupo" name="grupo" required placeholder="Ex.: Grupo Nossa Senhora Aparecida"></div>
         <div class="field"><label for="n-instr">Instrumento principal</label><select id="n-instr" name="instr" required class="instr-select"></select></div>
-        <div class="field"><label for="n-aluna">Já faz algum curso da Janaine?</label>
-          <select id="n-aluna" name="aluna" required><option value="">Escolha</option><option value="sim">Sim, já sou aluna</option><option value="nao">Ainda não</option></select></div>
         <div class="field"><label for="n-senha">Crie uma senha</label><input id="n-senha" name="senha" type="password" minlength="6" required autocomplete="new-password" placeholder="mínimo 6 caracteres"></div>
         <div class="err" id="err-new"></div>
         <button class="btn-gold" type="submit">Criar minha conta</button>
@@ -72,11 +70,26 @@
         </div>
         <div class="field"><label for="c-grupo">Nome do seu grupo</label><input id="c-grupo" name="grupo" required></div>
         <div class="field"><label for="c-instr">Instrumento principal</label><select id="c-instr" name="instr" required class="instr-select"></select></div>
-        <div class="field"><label for="c-aluna">Já faz algum curso da Janaine?</label>
-          <select id="c-aluna" name="aluna" required><option value="">Escolha</option><option value="sim">Sim, já sou aluna</option><option value="nao">Ainda não</option></select></div>
         <div class="err" id="err-complete"></div>
         <button class="btn-gold" type="submit">Entrar no repertório</button>
       </form>
+    </div>
+    <div class="auth-foot"><img src="assets/logo-p.png" alt="P by Janaine Pavani"></div>
+  </section>
+
+  <!-- AGUARDANDO LIBERAÇÃO -->
+  <section class="auth hidden" id="v-pending">
+    <div class="auth-top">
+      <img src="assets/logo-maes.png" alt="Mães que Oram pelos Filhos">
+      <h1>Cadastro recebido</h1>
+    </div>
+    <div class="auth-card pend">
+      <p>Por enquanto, o Repertório é só para quem já fez algum curso de música das Mães que Oram com a Janaine.</p>
+      <p>Não encontrei o e-mail <b id="pend-email"></b> na lista de alunas. Se você comprou o curso com outro e-mail, fale com a Janaine pelo WhatsApp que ela libera o seu acesso.</p>
+      <a class="btn-gold" id="pend-whats" target="_blank" rel="noopener">Falar com a Janaine</a>
+      <a class="btn-line cta-curso" target="_blank" rel="noopener">Conhecer os cursos</a>
+      <button class="link-btn" type="button" id="pend-retry">Já fui liberada, entrar de novo</button>
+      <button class="link-btn" type="button" id="pend-out">Sair</button>
     </div>
     <div class="auth-foot"><img src="assets/logo-p.png" alt="P by Janaine Pavani"></div>
   </section>
@@ -189,8 +202,6 @@
         </div>
         <div class="field"><label for="p-grupo">Nome do seu grupo</label><input id="p-grupo" name="grupo" required></div>
         <div class="field"><label for="p-instr">Instrumento principal</label><select id="p-instr" name="instr" required class="instr-select"></select></div>
-        <div class="field"><label for="p-aluna">Já faz algum curso da Janaine?</label>
-          <select id="p-aluna" name="aluna" required><option value="sim">Sim, já sou aluna</option><option value="nao">Ainda não</option></select></div>
         <button class="btn-navy" type="submit">Salvar alterações</button>
       </form>
       <button class="admin-link hidden" id="go-admin" type="button">Painel de cadastros</button>
@@ -206,11 +217,23 @@
     </div>
     <div class="main">
       <div id="adm-verify"></div>
+      <div class="adm-box">
+        <div class="adm-h">Quem pode entrar</div>
+        <div class="lvl adm-mode"><button data-modo="alunas" type="button">Só alunas</button><button data-modo="aberto" type="button">Todas as mães</button></div>
+        <p class="adm-note" id="mode-note"></p>
+      </div>
+      <div class="adm-box">
+        <div class="adm-h">Lista de alunas <span id="al-count"></span></div>
+        <p class="adm-note">Escolha a planilha exportada do Eduzz ou da Nutror (CSV ou TXT). O aplicativo pega todos os e-mails que encontrar nela. Quem já estava na lista não duplica.</p>
+        <label class="btn-navy file-btn">Importar lista de alunas<input type="file" id="al-file" accept=".csv,.txt,text/csv,text/plain" hidden></label>
+        <div class="adm-add"><input id="al-one" type="email" placeholder="Ou digite um e-mail para liberar"><button id="al-add" type="button">Liberar</button></div>
+      </div>
+      <div id="adm-pend"></div>
       <div class="adm-stats"><div><b id="st-total">0</b><span>mães cadastradas</span></div><div><b id="st-alunas">0</b><span>já são alunas</span></div><div><b id="st-semana">0</b><span>novas em 7 dias</span></div></div>
       <div class="adm-uf" id="adm-uf"></div>
       <div class="adm-tools">
         <input id="adm-q" placeholder="Buscar nome, cidade ou grupo" type="search">
-        <select id="adm-f"><option value="">Todas</option><option value="sim">Só alunas</option><option value="nao">Ainda não alunas</option></select>
+        <select id="adm-f"><option value="">Todas</option><option value="sim">Só alunas</option><option value="nao">Não alunas</option><option value="pendente">Aguardando liberação</option></select>
         <button id="adm-csv" type="button">Baixar planilha</button>
       </div>
       <div id="adm-list"></div>
