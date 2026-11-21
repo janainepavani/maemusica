@@ -13,7 +13,7 @@ import {
 import {
   getStorage, ref as sref, uploadBytes, getDownloadURL, listAll, deleteObject
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=20";
+import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=22";
 
 const fb = initializeApp(firebaseConfig);
 const auth = getAuth(fb);
@@ -646,7 +646,7 @@ const STORAGE_ERR = {
   "storage/timeout": "o armazenamento não respondeu em 90 segundos. Confira no Firebase se o Storage foi criado (Storage > Começar) e se o plano Blaze está ativo.",
   "permission-denied": "o banco de dados recusou. Confira se as regras novas do Firestore foram publicadas e se o seu e-mail foi confirmado."
 };
-const loteMod = () => lote || (lote = import("./lote.js?v=20"));
+const loteMod = () => lote || (lote = import("./lote.js?v=22"));
 function renderMusicAdmin() {
   const fsSongs = S.songs.filter(x => x.storage), stat = S.songs.filter(x => !x.storage);
   const row = (x, edit) => `<div class="mu-row"><div><b>${esc(x.titulo)}</b><small>${[x.cifra || x.cifraJson ? "cifra" : "", x.partituras?.length ? x.partituras.length + (x.partituras.length > 1 ? " partituras" : " partitura") : "", x.youtube ? "YouTube" : x.audio ? "áudio" : ""].filter(Boolean).join(" · ") || "sem arquivos"}</small></div>${edit ? `<button type="button" data-ed="${esc(x.id)}">Editar</button><button type="button" data-rm="${esc(x.id)}">Remover</button>` : ""}</div>`;
@@ -690,6 +690,7 @@ async function renderReview() {
       <div class="field"><label>Link do YouTube (se tiver)</label><input type="url" data-k="youtube" value="${esc(g.youtube)}" placeholder="https://youtu.be/..."></div>
       <label class="mu-chk"><input type="checkbox" data-k="curso" ${g.curso ? "checked" : ""}> Aulas completas disponíveis (Repertório)</label>
       ${g.files.map((f, j) => `<div class="mu-file"><span>${esc(f.file.name)}</span><select data-f="${j}">${Object.entries(L.TYPE_LABEL).map(([k, v]) => `<option value="${k}" ${k === f.type ? "selected" : ""}>${v}</option>`).join("")}</select></div>`).join("")}
+      ${REVIEW.length > 1 ? `<div class="mu-join"><label>É a mesma música que</label><select data-join="${i}"><option value="">Não, é outra música</option>${REVIEW.map((o, j) => j === i ? "" : `<option value="${j}">${esc(o.titulo)}</option>`).join("")}</select></div>` : ""}
       <div class="mu-bar hidden"><i></i></div><div class="mu-status">${esc(g.aviso || "")}</div></div>`).join("")
     + `<div class="mu-total hidden" id="mu-total"><div class="mu-total-t"><span id="mu-total-l"></span><b id="mu-total-p">0%</b></div><div class="mu-bar big"><i id="mu-total-i"></i></div></div>
     <div class="mu-actions"><button class="mu-cancel" type="button" id="mu-cancel">Cancelar</button><button class="mu-send" type="button" id="mu-send">Enviar ${REVIEW.length} ${REVIEW.length > 1 ? "músicas" : "música"}</button></div>`;
@@ -697,6 +698,15 @@ async function renderReview() {
     const g = REVIEW[+card.dataset.g];
     card.querySelectorAll("[data-k]").forEach(inp => inp.oninput = inp.onchange = () => { g[inp.dataset.k] = inp.type === "checkbox" ? inp.checked : inp.value; });
     card.querySelectorAll("[data-f]").forEach(sel => sel.onchange = () => { g.files[+sel.dataset.f].type = sel.value; });
+  });
+  $$("#mu-review [data-join]").forEach(sel => sel.onchange = () => {
+    if (sel.value === "") return;
+    const from = REVIEW[+sel.dataset.join], to = REVIEW[+sel.value];
+    to.files.push(...from.files);
+    to.autor = to.autor || from.autor; to.youtube = to.youtube || from.youtube;
+    if (from.existe && !to.existe) { to.existe = true; to.id = from.id; to.antigas = from.antigas; to.titulo = from.titulo; }
+    REVIEW = REVIEW.filter(g => g !== from);
+    renderReview(); toast("Arquivos juntados em " + to.titulo + ".");
   });
   $("#mu-cancel").onclick = () => { REVIEW = []; renderReview(); };
   $("#mu-send").onclick = sendAll;
@@ -728,6 +738,10 @@ async function sendAll() {
     const st = () => $(`#mu-review .mu-card[data-g="${i}"] .mu-status`) || { set className(v) {}, set textContent(v) {} };
     const log = t => { g.msg = t; const e = st(); e.className = "mu-status"; e.textContent = t; };
     g.files = g.files.filter(f => f.type !== "ignorar");
+    if (!g.existe) {
+      const ex = S.songs.find(x => x.storage && L.slug(x.titulo) === L.slug(g.titulo));
+      if (ex) { g.existe = true; g.id = ex.id; g.antigas = ex.partituras || []; }
+    }
     if (!g.titulo.trim()) { const e = st(); e.className = "mu-status bad"; e.textContent = "Falta o nome da música."; continue; }
     try {
       await L.sendSong(g, {
@@ -759,7 +773,7 @@ async function sendAll() {
   } else $("#mu-review").innerHTML = "";
 }
 function editSong(x) {
-  REVIEW = [{ id: x.id, titulo: x.titulo, autor: x.autor || "", youtube: x.youtube || "", curso: x.curso !== false, existe: true, files: [] }];
+  REVIEW = [{ id: x.id, titulo: x.titulo, autor: x.autor || "", youtube: x.youtube || "", curso: x.curso !== false, existe: true, antigas: x.partituras || [], files: [] }];
   renderReview();
   $("#mu-review").scrollIntoView({ behavior: "smooth", block: "start" });
   toast("Mude o que quiser e toque em Enviar. Para trocar arquivos, escolha os novos PDFs.");

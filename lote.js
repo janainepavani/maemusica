@@ -4,7 +4,7 @@
 // - cifra (PDF com "cifra" no nome): vira texto com acordes, para trocar o tom;
 // - grade / full score, partes / banda e outros PDFs: cada página vira imagem;
 // - áudio (mp3, m4a, wav): vai como está, para as músicas que não têm YouTube.
-import { parseCifraPdf } from "./cifra.js?v=20";
+import { parseCifraPdf } from "./cifra.js?v=22";
 
 const AUDIO_EXT = ["mp3", "m4a", "aac", "wav", "ogg"];
 const GENERIC = new Set(["partituras", "partitura", "cifras", "cifra", "pdf", "pdfs", "audios", "audio", "musicas", "repertorio", "arquivos", "amo", "maes que oram"]);
@@ -27,7 +27,8 @@ function songKey(name) {
   let n = norm(name).replace(/\.[a-z0-9]+$/, "");
   n = n.replace(/^\s*\d+\s*[._-]\s*/, ""); // "02. Repertório..."
   n = n.replace(/[^a-z0-9]+/g, " ");
-  n = n.replace(/\b(cifra|cifras|grade|full|score|partes?|banda|amo|jp|v\d+|final|versao|partitura|completa|audio|guia|mp3|repertorio|novo|nova|atualizado|atualizada|revisado|revisada)\b/g, " ");
+  n = n.replace(/\b(cifra|cifras|grade|full|score|partes?|banda|amo|jp|v\d+|final|versao|partitura|completa|audio|guia|mp3|repertorio|novo|nova|atualizado|atualizada|revisado|revisada|arranjo|arr|pdf|parte)\b/g, " ");
+  n = n.replace(/\b\d+\b/g, " "); // números soltos, como "2" ou "2026"
   return n.replace(/[^a-z0-9]+/g, " ").trim();
 }
 function prettyTitle(key) {
@@ -46,7 +47,7 @@ export function mergeSame(groups) {
   const out = [];
   for (const g of groups) {
     const t = out.find(x => slug(x.titulo) === slug(g.titulo));
-    if (t) { t.files.push(...g.files); t.autor = t.autor || g.autor; t.youtube = t.youtube || g.youtube; t.existe = t.existe || g.existe; if (g.existe) t.id = g.id; }
+    if (t) { t.files.push(...g.files); t.autor = t.autor || g.autor; t.youtube = t.youtube || g.youtube; t.existe = t.existe || g.existe; if (g.existe) { t.id = g.id; t.antigas = g.antigas; } }
     else out.push(g);
   }
   return out;
@@ -61,7 +62,7 @@ export function groupFiles(files, existing) {
     const id = slug(key);
     if (!groups.has(id)) {
       const ex = existing.find(s => s.id === id || slug(s.titulo) === id);
-      groups.set(id, { id: ex ? ex.id : id, titulo: ex ? ex.titulo : prettyTitle(key), autor: ex?.autor || "", youtube: ex?.youtube || "", curso: ex ? ex.curso !== false : true, existe: !!ex, files: [] });
+      groups.set(id, { id: ex ? ex.id : id, titulo: ex ? ex.titulo : prettyTitle(key), autor: ex?.autor || "", youtube: ex?.youtube || "", curso: ex ? ex.curso !== false : true, existe: !!ex, antigas: ex?.storage ? (ex.partituras || []) : [], files: [] });
     }
     groups.get(id).files.push({ file: f, type });
   }
@@ -102,7 +103,7 @@ export async function peekCifra(file) {
 }
 
 const DESC = {
-  cifraimg: ["Cifra", "Cifra em PDF, sem troca de tom"],
+  cifraimg: ["Cifra em PDF", "A cifra como no arquivo original"],
   grade: ["Grade completa", "Voz, cifra e acompanhamento"],
   banda: ["Partes da banda", "Cifra para a banda"]
 };
@@ -115,7 +116,7 @@ export async function sendSong(g, api) {
   const prog = f => api.progress?.(Math.min(1, (doneU + f) / units));
   prog(0);
   const cif = g.files.find(x => x.type === "cifra");
-  let cifraComoImagem = null;
+  let cifraComoImagem = null; // a cifra em PDF sempre vai também como imagem, igual ao original
   if (cif) {
     api.log("lendo a cifra");
     const r = await parseCifraPdf(await openPdf(cif.file));
@@ -124,9 +125,9 @@ export async function sendSong(g, api) {
       data.cifraJson = JSON.stringify(r.versoes);
       data.tons = [...new Set(r.versoes.map(v => v.tom))];
     } else {
-      // fora do modelo: vai como imagem, para ler; sem troca de tom
-      cifraComoImagem = cif; g.semTom = true;
+      g.semTom = true; // fora do modelo: fica só a imagem, sem troca de tom
     }
+    cifraComoImagem = cif;
   }
   const parts = g.files.filter(x => ["grade", "banda", "partitura"].includes(x.type));
   if (cifraComoImagem) parts.unshift({ file: cifraComoImagem.file, type: "cifraimg" });
@@ -150,6 +151,12 @@ export async function sendSong(g, api) {
       const [nome, desc] = DESC[pf.type] || [prettyTitle(songKey(pf.file.name)) || "Partitura", "Partitura"];
       data.partituras.push({ nome, desc, paginas });
     }
+    // as partituras que já estavam no aplicativo e não foram trocadas agora continuam
+    const novos = new Set(data.partituras.map(p => p.nome));
+    if (novos.has("Cifra em PDF")) novos.add("Cifra");
+    data.partituras.push(...(g.antigas || []).filter(p => !novos.has(p.nome)));
+    const ordem = ["Cifra em PDF", "Cifra", "Grade completa", "Partes da banda"];
+    data.partituras.sort((a, b) => (ordem.indexOf(a.nome) + 1 || 9) - (ordem.indexOf(b.nome) + 1 || 9));
   }
   const aud = g.files.find(x => x.type === "audio");
   if (aud) {
