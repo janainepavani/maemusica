@@ -3,7 +3,8 @@
 // de cada acorde na letra, para o aplicativo trocar o tom e quebrar as linhas no celular.
 // Mesmo algoritmo de tools/parse_cifra.py, escrito para rodar no navegador com o pdf.js.
 
-const CHORD = "[A-G](?:#|b)?(?:\\([^)]*\\)|maj7|m|sus4|sus2|dim|aug|°|º|\\+|\\d)*(?:/[A-G](?:#|b)?)?";
+// acorde: Aadd9, Bm7, D/E, Em(maj7), C7M, F#m7(b5), G°, A4, E9, Bbsus4, Dmaj7, C6/9...
+const CHORD = "[A-G](?:#|b)?(?:\\([^)]*\\)|maj|min|dim|aug|sus|add|M|m|°|º|ø|\\+|-|\\d|/(?=\\d))*(?:/[A-G](?:#|b)?)?";
 const TOKEN_RE = new RegExp("I|\\d+/\\d+|" + CHORD, "y");
 const LEFT = 36.5, CW = 5.6;
 
