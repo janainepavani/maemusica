@@ -105,11 +105,23 @@ function place(tokens, xs, endx) {
   });
 }
 
-const rowText = row => row.map(c => c.text).join("").trim();
+const rowText = row => row.map(c => c.text).join("").normalize("NFC").trim();
+const plain = t => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+// "Nível: intermediário/ Tonalidade: D ( 6/8 ) t: 85bpm", aceitando acentos decompostos, espaços e partes faltando
+function readHeader(text) {
+  const p = plain(text).replace(/\s+/g, " ");
+  if (!/^\s*nivel\s*:/.test(p)) return null;
+  const m = p.match(/nivel\s*:\s*([^/]+?)\s*\/\s*tonalidade\s*:\s*([a-g][#b]?m?)\s*(?:\(\s*([\d/]+)\s*\))?\s*(?:t\s*:\s*(\d+))?/);
+  if (!m) return null;
+  const nivelP = m[1].trim();
+  const nivel = nivelP.startsWith("inter") ? "intermediário" : nivelP.startsWith("simpl") ? "simplificado" : nivelP.startsWith("avan") ? "avançado" : nivelP.startsWith("inic") ? "iniciante" : nivelP;
+  const tom = m[2].charAt(0).toUpperCase() + m[2].slice(1);
+  return { nivel, tom, compasso: m[3] || "", bpm: m[4] ? +m[4] : "" };
+}
 
 // pdf: documento aberto com pdfjsLib.getDocument(...).promise
 export async function parseCifraPdf(pdf) {
-  const versions = []; let cur = null; let titulo = "", autor = "";
+  const versions = []; let cur = null; let titulo = "", autor = ""; const amostra = [];
   for (let p = 1; p <= pdf.numPages; p++) {
     const page = await pdf.getPage(p);
     const vp = page.getViewport({ scale: 1 });
@@ -121,12 +133,13 @@ export async function parseCifraPdf(pdf) {
       const text = rowText(row);
       if (!text) continue;
       const top = row[0].top, size = row[0].size;
-      if (text.startsWith("Nível")) {
-        const m = text.replace(/\s+/g, " ").match(/Nível:\s*([^/]+)\/\s*Tonalidade:\s*(\S+)\s*\(\s*([\d/]+)\s*\)\s*t:\s*(\d+)/);
-        if (!m) continue;
-        cur = { nivel: m[1].trim(), tom: m[2], compasso: m[3], bpm: +m[4], linhas: [] };
+      if (/^\s*nivel/.test(plain(text))) {
+        const h = readHeader(text);
+        if (!h) { amostra.push("cabeçalho não lido: " + text); continue; }
+        cur = { ...h, linhas: [] };
         versions.push(cur); lastTop = top; continue;
       }
+      if (amostra.length < 8) amostra.push(text);
       if (size > 11 || !cur) {
         if (!titulo && size > 20) titulo = text.replace(/\s+/g, " ");
         else if (titulo && !autor && size > 11 && size <= 20) autor = text.replace(/\s+/g, " ");
@@ -143,7 +156,7 @@ export async function parseCifraPdf(pdf) {
       const toks = chordTokens(row);
       if (toks) {
         const nxt = rows[i + 1];
-        if (nxt && nxt[0].top - top < 16 && !chordTokens(nxt) && nxt[0].size < 11 && !rowText(nxt).startsWith("Nível")) {
+        if (nxt && nxt[0].top - top < 16 && !chordTokens(nxt) && nxt[0].size < 11 && !/^\s*nivel/.test(plain(rowText(nxt)))) {
           const { s, xs, endx } = lyricString(nxt);
           cur.linhas.push({ t: "pair", c: place(toks, xs, endx), l: s });
           lastTop = nxt[0].top; i++; continue;
@@ -160,5 +173,6 @@ export async function parseCifraPdf(pdf) {
     while (clean.length && clean[clean.length - 1].t === "blank") clean.pop();
     v.linhas = clean;
   }
-  return { titulo, autor, versoes: versions };
+  if (!versions.length) console.warn("Cifra fora do modelo. Primeiras linhas lidas:", amostra);
+  return { titulo, autor, versoes: versions, amostra };
 }
