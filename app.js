@@ -13,7 +13,7 @@ import {
 import {
   getStorage, ref as sref, uploadBytes, getDownloadURL, listAll, deleteObject
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=13";
+import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=14";
 
 const fb = initializeApp(firebaseConfig);
 const auth = getAuth(fb);
@@ -304,7 +304,7 @@ function renderList() {
   let h = hits.map((s, i) => `<button class="song" data-id="${esc(s.id)}" type="button">
       <div class="num">${i + 1}</div>
       <div><div class="t">${esc(s.titulo)}</div><div class="a">${esc(s.autor)}</div>
-      <div class="chips">${s.cifra || s.cifraJson ? '<span class="chip">Cifra</span>' : ""}${s.partituras?.length ? '<span class="chip">Partitura</span>' : ""}${s.youtube || s.audio ? '<span class="chip">Ouvir</span>' : ""}${s.curso ? '<span class="badge-aula">Tem aulas completas</span>' : ""}</div></div></button>`).join("");
+      <div class="chips">${s.cifra || s.cifraJson ? '<span class="chip">Cifra</span>' : ""}${s.partituras?.length ? '<span class="chip">Partitura</span>' : ""}${s.youtube || s.audio ? '<span class="chip">Ouvir</span>' : ""}${s.curso ? '<span class="badge-aula">Aulas completas disponíveis</span>' : ""}</div></div></button>`).join("");
   if (!q) {
     const have = new Set(S.songs.map(x => norm(x.titulo)));
     h += (S.cfg.emBreve || []).filter(t => !have.has(norm(t))).map(t => `<div class="song soon"><div class="num">·</div><div><div class="t">${esc(t)}</div><div class="a">Em breve</div></div></div>`).join("");
@@ -640,7 +640,7 @@ const STORAGE_ERR = {
   "storage/retry-limit-exceeded": "a internet caiu no meio do envio. Tente de novo.",
   "permission-denied": "o banco de dados recusou. Confira se as regras novas do Firestore foram publicadas e se o seu e-mail foi confirmado."
 };
-const loteMod = () => lote || (lote = import("./lote.js?v=13"));
+const loteMod = () => lote || (lote = import("./lote.js?v=14"));
 function renderMusicAdmin() {
   const fsSongs = S.songs.filter(x => x.storage), stat = S.songs.filter(x => !x.storage);
   const row = (x, edit) => `<div class="mu-row"><div><b>${esc(x.titulo)}</b><small>${[x.cifra || x.cifraJson ? "cifra" : "", x.partituras?.length ? x.partituras.length + (x.partituras.length > 1 ? " partituras" : " partitura") : "", x.youtube ? "YouTube" : x.audio ? "áudio" : ""].filter(Boolean).join(" · ") || "sem arquivos"}</small></div>${edit ? `<button type="button" data-ed="${esc(x.id)}">Editar</button><button type="button" data-rm="${esc(x.id)}">Remover</button>` : ""}</div>`;
@@ -682,7 +682,7 @@ async function renderReview() {
       <div class="field"><label>Música${g.existe ? "" : '<span class="mu-new">nova</span>'}</label><input type="text" data-k="titulo" value="${esc(g.titulo)}"></div>
       <div class="field"><label>Autor</label><input type="text" data-k="autor" value="${esc(g.autor)}"></div>
       <div class="field"><label>Link do YouTube (se tiver)</label><input type="url" data-k="youtube" value="${esc(g.youtube)}" placeholder="https://youtu.be/..."></div>
-      <label class="mu-chk"><input type="checkbox" data-k="curso" ${g.curso ? "checked" : ""}> Tem aulas completas no Repertório</label>
+      <label class="mu-chk"><input type="checkbox" data-k="curso" ${g.curso ? "checked" : ""}> Aulas completas disponíveis (Repertório)</label>
       ${g.files.map((f, j) => `<div class="mu-file"><span>${esc(f.file.name)}</span><select data-f="${j}">${Object.entries(L.TYPE_LABEL).map(([k, v]) => `<option value="${k}" ${k === f.type ? "selected" : ""}>${v}</option>`).join("")}</select></div>`).join("")}
       <div class="mu-bar hidden"><i></i></div><div class="mu-status">${esc(g.aviso || "")}</div></div>`).join("")
     + `<div class="mu-total hidden" id="mu-total"><div class="mu-total-t"><span id="mu-total-l"></span><b id="mu-total-p">0%</b></div><div class="mu-bar big"><i id="mu-total-i"></i></div></div>
