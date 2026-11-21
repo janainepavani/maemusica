@@ -13,7 +13,7 @@ import {
 import {
   getStorage, ref as sref, uploadBytes, getDownloadURL, listAll, deleteObject
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=11";
+import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=12";
 
 const fb = initializeApp(firebaseConfig);
 const auth = getAuth(fb);
@@ -243,7 +243,7 @@ const isAluna = () => S.profile?.aluna === "sim";
 // banners: um curso por banner, cada um com um detalhe dele; ao tocar, vai direto para a compra
 const pick = a => a[Math.floor(Math.random() * a.length)];
 function bannerHTML(c, b) {
-  return `<a class="promo" href="${esc(c.link)}" target="_blank" rel="noopener"><div class="in">
+  return `<a class="promo" href="${esc(b.link || c.link)}" target="_blank" rel="noopener"><div class="in">
     <div class="k">${esc(c.curto)}</div><h3>${esc(b.h)}</h3><p>${esc(b.p)}</p><span class="cta">${esc(c.botao || "Quero me inscrever")} ›</span></div></a>`;
 }
 let carT = null;
@@ -264,11 +264,16 @@ function renderPromos() {
   $("#study-top").innerHTML = isAluna()
     ? `<a class="promo aluna" href="${L.nutror}" target="_blank" rel="noopener" style="margin-bottom:14px"><div class="in"><div class="k">Área da aluna</div><h3>Continue suas aulas</h3><p>Entre direto nos seus cursos na Nutror, com o seu e-mail e senha.</p><span class="cta">Entrar nas minhas aulas ›</span></div></a>`
     : `<a class="nutror" href="${L.nutror}" target="_blank" rel="noopener" style="margin:0 0 14px"><div><b>Já é aluna?</b><br><span>Entre nas suas aulas na Nutror</span></div><div style="font-size:22px;color:var(--gold)">›</div></a>`;
+  const MAES = "https://www.janainepavani.com/maes";
+  const modRow = m => `<div class="mod"><b>${esc(m.nome)}</b><div class="mod-b">
+      ${m.entrar ? `<a class="mod-in" href="${esc(m.entrar)}" target="_blank" rel="noopener">Entrar</a>` : ""}
+      <a class="mod-buy" href="${esc(m.link || MAES)}" target="_blank" rel="noopener">${m.link ? "Inscrever" : "Ver"}</a></div></div>`;
   $("#study-list").innerHTML = S.cursos.map((c, i) => `<div class="course${i ? "" : " feat"}">
       ${c.selo ? `<div class="k">${esc(c.selo)}</div>` : ""}<h3>${esc(c.nome)}</h3><p>${esc(c.texto)}</p>
       ${c.detalhes.length ? `<ul>${c.detalhes.map(d => `<li>${esc(d)}</li>`).join("")}</ul>` : ""}
-      ${c.entrar ? `<a class="entrar" href="${esc(c.entrar)}" target="_blank" rel="noopener">Já comprei: entrar no curso</a>` : ""}
-      <a href="${esc(c.link)}" target="_blank" rel="noopener">${esc(c.botao || "Quero me inscrever")}</a></div>`).join("");
+      ${c.modulos && c.modulos.length > 1 ? `<div class="mods">${c.modulos.map(modRow).join("")}</div>` : `
+      ${(c.entrar || c.modulos?.[0]?.entrar) ? `<a class="entrar" href="${esc(c.entrar || c.modulos[0].entrar)}" target="_blank" rel="noopener">Já comprei: entrar no curso</a>` : ""}
+      <a href="${esc(c.modulos?.[0]?.link || c.link)}" target="_blank" rel="noopener">${esc(c.botao || "Quero me inscrever")}</a>`}</div>`).join("");
   startCarousel();
 }
 function startCarousel() {
@@ -635,7 +640,7 @@ const STORAGE_ERR = {
   "storage/retry-limit-exceeded": "a internet caiu no meio do envio. Tente de novo.",
   "permission-denied": "o banco de dados recusou. Confira se as regras novas do Firestore foram publicadas e se o seu e-mail foi confirmado."
 };
-const loteMod = () => lote || (lote = import("./lote.js?v=11"));
+const loteMod = () => lote || (lote = import("./lote.js?v=12"));
 function renderMusicAdmin() {
   const fsSongs = S.songs.filter(x => x.storage), stat = S.songs.filter(x => !x.storage);
   const row = (x, edit) => `<div class="mu-row"><div><b>${esc(x.titulo)}</b><small>${[x.cifra || x.cifraJson ? "cifra" : "", x.partituras?.length ? x.partituras.length + (x.partituras.length > 1 ? " partituras" : " partitura") : "", x.youtube ? "YouTube" : x.audio ? "áudio" : ""].filter(Boolean).join(" · ") || "sem arquivos"}</small></div>${edit ? `<button type="button" data-ed="${esc(x.id)}">Editar</button><button type="button" data-rm="${esc(x.id)}">Remover</button>` : ""}</div>`;

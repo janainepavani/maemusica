@@ -273,3 +273,11 @@ input,select{font:inherit}
 
 .course a.entrar{background:#fff;color:var(--navy);border:1.5px solid var(--navy)}
 .course.feat a.entrar{background:#fff;color:var(--navy-deep);border-color:var(--gold)}
+
+.mods{margin-top:14px;border-top:1px solid var(--line)}
+.mod{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
+.mod b{color:var(--navy);font-size:15px}
+.mod-b{display:flex;gap:6px}
+.course .mod a{display:inline-block;margin:0;padding:9px 14px;border-radius:10px;font-size:14px}
+.course .mod a.mod-buy{background:var(--navy);color:#fff}
+.course .mod a.mod-in{background:#fff;color:var(--navy);border:1.5px solid var(--navy)}

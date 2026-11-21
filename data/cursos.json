@@ -55,13 +55,13 @@
     "entrar": ""
   },
   {
-    "id": "formacao1",
-    "nome": "Formação Musical 1",
-    "curto": "Formação Musical 1",
+    "id": "formacao",
+    "nome": "Formação Musical",
+    "curto": "Formação Musical",
     "link": "https://chk.eduzz.com/801VRO2A97",
-    "texto": "Teoria musical desde o começo, com rigor e sem pressa. Cada conteúdo é aprendido em cima das músicas que vocês já cantam no movimento.",
+    "texto": "Teoria musical desde o começo, com rigor e sem pressa, módulo por módulo. Cada conteúdo é aprendido em cima das músicas que vocês já cantam no movimento.",
     "detalhes": [
-      "Para quem nunca estudou música",
+      "Para quem nunca estudou música, a partir do módulo 1",
       "Ritmo, notas, escalas e acordes, aula por aula",
       "Tudo aplicado nas músicas do movimento"
     ],
@@ -73,38 +73,35 @@
       {
         "h": "Entenda o que você canta e toca",
         "p": "Ritmo, notas e acordes explicados com calma, aula por aula."
-      }
-    ],
-    "entrar": ""
-  },
-  {
-    "id": "formacao2",
-    "nome": "Formação Musical 2",
-    "curto": "Formação Musical 2",
-    "link": "https://chk.eduzz.com/39YDJGQ39O",
-    "texto": "A continuação da Formação Musical 1. A teoria avança e chegam músicas novas do repertório, como Oração de Louvor.",
-    "detalhes": [
-      "Para quem terminou a Formação Musical 1",
-      "Músicas novas, como Oração de Louvor"
-    ],
-    "banners": [
+      },
       {
         "h": "Terminou a Formação Musical 1? A próxima etapa já está pronta",
-        "p": "A teoria continua, agora com músicas novas como Oração de Louvor."
+        "p": "A teoria continua, agora com músicas novas como Oração de Louvor.",
+        "link": "https://chk.eduzz.com/39YDJGQ39O"
       }
     ],
-    "entrar": ""
+    "modulos": [
+      {
+        "nome": "Formação Musical 1",
+        "link": "https://chk.eduzz.com/801VRO2A97",
+        "entrar": ""
+      },
+      {
+        "nome": "Formação Musical 2",
+        "link": "https://chk.eduzz.com/39YDJGQ39O",
+        "entrar": ""
+      }
+    ]
   },
   {
-    "id": "teclado1",
-    "nome": "Teclado 1",
-    "curto": "Teclado 1",
+    "id": "teclado",
+    "nome": "Teclado",
+    "curto": "Teclado",
     "link": "https://chk.eduzz.com/R9JJ7R5Z9X",
-    "texto": "O teclado desde a primeira aula, para acompanhar o seu grupo com as músicas do movimento.",
+    "texto": "O teclado desde a primeira aula, para acompanhar o seu grupo com as músicas do movimento. São quatro módulos, cada um continuando o anterior.",
     "detalhes": [
-      "Começa do zero",
-      "Acordes que já servem para as músicas do grupo",
-      "O curso continua em outros módulos gravados"
+      "O módulo 1 começa do zero",
+      "Acordes que já servem para as músicas do grupo"
     ],
     "banners": [
       {
@@ -112,18 +109,38 @@
         "p": "Do zero, com acordes que já servem para as músicas do movimento."
       }
     ],
-    "entrar": ""
+    "modulos": [
+      {
+        "nome": "Teclado 1",
+        "link": "https://chk.eduzz.com/R9JJ7R5Z9X",
+        "entrar": ""
+      },
+      {
+        "nome": "Teclado 2",
+        "link": "",
+        "entrar": ""
+      },
+      {
+        "nome": "Teclado 3",
+        "link": "",
+        "entrar": ""
+      },
+      {
+        "nome": "Teclado 4",
+        "link": "",
+        "entrar": ""
+      }
+    ]
   },
   {
-    "id": "violao1",
-    "nome": "Violão 1",
-    "curto": "Violão 1",
+    "id": "violao",
+    "nome": "Violão",
+    "curto": "Violão",
     "link": "https://chk.eduzz.com/6W48X7B60Z",
-    "texto": "O violão desde a primeira aula, com as músicas que o seu grupo já canta.",
+    "texto": "O violão desde a primeira aula, com as músicas que o seu grupo já canta. São quatro módulos, cada um continuando o anterior.",
     "detalhes": [
-      "Começa do zero",
-      "Primeiros acordes e batidas",
-      "O curso continua em outros módulos gravados"
+      "O módulo 1 começa do zero",
+      "Primeiros acordes e batidas"
     ],
     "banners": [
       {
@@ -131,7 +148,73 @@
         "p": "Do zero, tocando as músicas que o seu grupo já canta."
       }
     ],
-    "entrar": ""
+    "modulos": [
+      {
+        "nome": "Violão 1",
+        "link": "https://chk.eduzz.com/6W48X7B60Z",
+        "entrar": ""
+      },
+      {
+        "nome": "Violão 2",
+        "link": "",
+        "entrar": ""
+      },
+      {
+        "nome": "Violão 3",
+        "link": "",
+        "entrar": ""
+      },
+      {
+        "nome": "Violão 4",
+        "link": "",
+        "entrar": ""
+      }
+    ]
+  },
+  {
+    "id": "harmonia",
+    "nome": "Harmonia Vocal",
+    "curto": "Harmonia Vocal",
+    "link": "https://www.janainepavani.com/maes",
+    "texto": "Para o grupo cantar a várias vozes. Você aprende a ouvir, a montar e a sustentar a sua voz dentro da harmonia.",
+    "detalhes": [
+      "Primeira, segunda e terceira voz",
+      "Com as músicas do movimento"
+    ],
+    "banners": [],
+    "modulos": [
+      {
+        "nome": "Harmonia Vocal 1",
+        "link": "",
+        "entrar": ""
+      },
+      {
+        "nome": "Harmonia Vocal 2",
+        "link": "",
+        "entrar": ""
+      },
+      {
+        "nome": "Harmonia Vocal 3",
+        "link": "",
+        "entrar": ""
+      }
+    ]
+  },
+  {
+    "id": "tecnica",
+    "nome": "Técnica Vocal",
+    "curto": "Técnica Vocal",
+    "link": "https://www.janainepavani.com/maes",
+    "texto": "Respiração, apoio e cuidado com a voz, para cantar nos encontros e nas missas com mais segurança.",
+    "detalhes": [],
+    "banners": [],
+    "modulos": [
+      {
+        "nome": "Técnica Vocal",
+        "link": "",
+        "entrar": ""
+      }
+    ]
   },
   {
     "id": "missao",
@@ -152,16 +235,5 @@
         "p": "Uns 20 minutos por dia, cronograma pronto e tira-dúvidas ao vivo a cada quinze dias."
       }
     ]
-  },
-  {
-    "id": "outros",
-    "nome": "Outros cursos completos",
-    "curto": "Cursos completos",
-    "selo": "No seu tempo",
-    "link": "https://www.janainepavani.com/maes",
-    "botao": "Ver os cursos",
-    "texto": "Técnica Vocal, Harmonia Vocal e os módulos seguintes de Teclado, Violão e Formação Musical, para aprender do zero ou aprofundar, quando e como quiser.",
-    "detalhes": [],
-    "banners": []
   }
 ]
