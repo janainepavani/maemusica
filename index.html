@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=15">
+<link rel="stylesheet" href="styles.css?v=16">
 </head>
 <body>
 <div class="app" id="app">
@@ -219,6 +219,8 @@
           <label class="btn-navy file-btn" style="flex:1">Escolher arquivos<input type="file" id="mu-files" multiple accept=".pdf,.mp3,.m4a,.wav,.aac,.ogg" hidden></label>
           <label class="btn-navy file-btn" style="flex:1">Escolher pasta<input type="file" id="mu-dir" webkitdirectory multiple hidden></label>
         </div>
+        <button class="link-btn" type="button" id="mu-test" style="color:var(--navy-2)">Testar o armazenamento</button>
+        <div class="mu-status" id="mu-test-r"></div>
         <div id="mu-review"></div>
         <div id="mu-list"></div>
       </div>
@@ -247,6 +249,6 @@
     <div class="viewer-pages" id="v-pages"></div>
   </div>
 </div>
-<script type="module" src="app.js?v=15"></script>
+<script type="module" src="app.js?v=16"></script>
 </body>
 </html>

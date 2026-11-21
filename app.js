@@ -13,7 +13,7 @@ import {
 import {
   getStorage, ref as sref, uploadBytes, getDownloadURL, listAll, deleteObject
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=15";
+import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=16";
 
 const fb = initializeApp(firebaseConfig);
 const auth = getAuth(fb);
@@ -644,7 +644,7 @@ const STORAGE_ERR = {
   "storage/timeout": "o armazenamento não respondeu em 90 segundos. Confira no Firebase se o Storage foi criado (Storage > Começar) e se o plano Blaze está ativo.",
   "permission-denied": "o banco de dados recusou. Confira se as regras novas do Firestore foram publicadas e se o seu e-mail foi confirmado."
 };
-const loteMod = () => lote || (lote = import("./lote.js?v=15"));
+const loteMod = () => lote || (lote = import("./lote.js?v=16"));
 function renderMusicAdmin() {
   const fsSongs = S.songs.filter(x => x.storage), stat = S.songs.filter(x => !x.storage);
   const row = (x, edit) => `<div class="mu-row"><div><b>${esc(x.titulo)}</b><small>${[x.cifra || x.cifraJson ? "cifra" : "", x.partituras?.length ? x.partituras.length + (x.partituras.length > 1 ? " partituras" : " partitura") : "", x.youtube ? "YouTube" : x.audio ? "áudio" : ""].filter(Boolean).join(" · ") || "sem arquivos"}</small></div>${edit ? `<button type="button" data-ed="${esc(x.id)}">Editar</button><button type="button" data-rm="${esc(x.id)}">Remover</button>` : ""}</div>`;
@@ -771,3 +771,20 @@ async function removeSong(x) {
     await loadSongs(); renderList(); renderMusicAdmin(); toast(x.titulo + " removida.");
   } catch (e) { console.error(e); toast("Não consegui remover. Tente de novo."); }
 }
+
+$("#mu-test").onclick = async () => {
+  const out = $("#mu-test-r"); out.className = "mu-status"; out.textContent = "Testando...";
+  const t0 = Date.now();
+  try {
+    await auth.currentUser.reload(); await auth.currentUser.getIdToken(true);
+    const info = `e-mail confirmado: ${auth.currentUser.emailVerified ? "sim" : "NÃO"} · pasta: ${firebaseConfig.storageBucket}`;
+    out.textContent = info + " · enviando um arquivo de teste...";
+    await withTimeout(uploadBytes(sref(storage, "songs/_teste.txt"), new Blob(["teste " + new Date().toISOString()], { type: "text/plain" }), { contentType: "text/plain" }), 30000, "storage/timeout");
+    await deleteObject(sref(storage, "songs/_teste.txt")).catch(() => {});
+    out.className = "mu-status ok"; out.textContent = info + ` · funcionou (${((Date.now() - t0) / 1000).toFixed(1)} s)`;
+  } catch (e) {
+    console.error(e);
+    out.className = "mu-status bad";
+    out.textContent = `Falhou: ${e.code || ""} ${e.message || e}`.slice(0, 400);
+  }
+};
