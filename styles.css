@@ -317,3 +317,17 @@ input,select{font:inherit}
 .guide th{background:var(--paper);color:var(--navy)}
 .guide a{color:var(--navy-2);font-weight:500}
 .guide strong{color:var(--navy)}
+
+.instr-group{display:flex;flex-wrap:wrap;gap:8px}
+.chk{display:flex;align-items:center;gap:6px;padding:9px 12px;border-radius:10px;background:rgba(255,255,255,.95);color:var(--ink);font-size:15px;cursor:pointer;text-transform:none;letter-spacing:0}
+.edit .chk{background:var(--paper);border:1px solid var(--line)}
+.chk input{width:18px;height:18px;accent-color:var(--navy)}
+.instr-outro{margin-top:8px;width:100%;padding:12px 14px;border-radius:11px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.95);font-size:16px}
+.edit .instr-outro{border-color:var(--line);background:var(--paper)}
+.field label small{text-transform:none;letter-spacing:0;opacity:.8}
+.pend-req textarea{width:100%;padding:12px;border-radius:11px;border:0;font:inherit;font-size:15px;resize:vertical}
+.pend-req .field label{color:var(--gold-soft)}
+.pend-ok{color:#CFE9C9!important;font-weight:500}
+.pedido{margin:6px 0;padding:8px 10px;border-radius:8px;background:#FFF6DA;border:1px solid var(--gold);color:var(--ink)}
+.verify button{margin-left:0}
+.field label.chk{display:flex;margin:0;color:var(--ink);font-size:15px;text-transform:none;letter-spacing:0;font-weight:500}

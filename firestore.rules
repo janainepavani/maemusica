@@ -15,14 +15,15 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/config/acesso).data.modo == 'aberto';
     }
     function validProfile(d) {
-      return d.keys().hasOnly(['nome', 'email', 'whats', 'cidade', 'uf', 'grupo', 'instr', 'aluna', 'status', 'criadoEm', 'ultimoAcesso', 'acessos'])
+      return d.keys().hasOnly(['nome', 'email', 'whats', 'cidade', 'uf', 'grupo', 'instr', 'aluna', 'status', 'criadoEm', 'ultimoAcesso', 'acessos', 'pedidoEm', 'pedidoMsg'])
         && d.nome is string && d.nome.size() > 0 && d.nome.size() <= 120
         && d.email == myEmail()
         && d.whats is string && d.whats.size() <= 40
         && d.cidade is string && d.cidade.size() <= 80
         && d.uf is string && d.uf.size() <= 2
         && d.grupo is string && d.grupo.size() <= 120
-        && d.instr is string && d.instr.size() <= 40
+        && d.instr is string && d.instr.size() <= 200
+        && (!('pedidoMsg' in d) || (d.pedidoMsg is string && d.pedidoMsg.size() <= 300))
         && d.aluna in ['sim', 'nao']
         && d.status in ['ativa', 'pendente'];
     }

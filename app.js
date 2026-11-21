@@ -13,7 +13,7 @@ import {
 import {
   getStorage, ref as sref, uploadBytes, getDownloadURL, listAll, deleteObject
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=29";
+import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=31";
 
 const fb = initializeApp(firebaseConfig);
 const auth = getAuth(fb);
@@ -36,9 +36,35 @@ const S = { user: null, profile: null, songs: [], cfg: null, isAdmin: false };
 
 /* ---------- listas do formulário ---------- */
 const UFS = "AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO".split(" ");
-const INSTR = ["Voz", "Violão", "Teclado / piano", "Outro instrumento", "Ainda não toco"];
+const INSTR = ["Canto", "Violão", "Teclado / piano", "Regência", "Outro"];
 $$(".uf-select").forEach(s => s.innerHTML = '<option value="">UF</option>' + UFS.map(u => `<option>${u}</option>`).join(""));
-$$(".instr-select").forEach(s => s.innerHTML = '<option value="">Escolha</option>' + INSTR.map(u => `<option>${u}</option>`).join(""));
+// "O que você faz no grupo": várias opções; "Outro" abre um campo para escrever
+$$(".instr-group").forEach(g => {
+  g.innerHTML = INSTR.map(u => `<label class="chk"><input type="checkbox" value="${u}"> ${u}</label>`).join("") + `<label class="chk"><input type="checkbox" value="Ainda não toco nem canto"> Ainda não toco nem canto</label>`;
+  const outro = g.parentElement.querySelector(".instr-outro");
+  g.querySelector('input[value="Outro"]').onchange = e => outro.classList.toggle("hidden", !e.target.checked);
+});
+function readInstr(form) {
+  const marc = [...form.querySelectorAll(".instr-group input:checked")].map(x => x.value);
+  const outro = form.querySelector(".instr-outro").value.trim();
+  return marc.map(v => v === "Outro" ? (outro || "Outro") : v).join(", ").slice(0, 200);
+}
+function fillInstr(form, val) {
+  const parts = (val || "").split(",").map(x => x.trim()).filter(Boolean);
+  const box = form.querySelector(".instr-group"), outro = form.querySelector(".instr-outro");
+  const extra = [];
+  parts.forEach(p => {
+    const known = { "Voz": "Canto", "Ainda não toco": "Ainda não toco nem canto", "Outro instrumento": "Outro" }[p] || p;
+    const cb = box.querySelector(`input[value="${CSS.escape(known)}"]`);
+    if (cb) cb.checked = true; else extra.push(p);
+  });
+  if (extra.length) { box.querySelector('input[value="Outro"]').checked = true; outro.value = extra.join(", "); }
+  outro.classList.toggle("hidden", !box.querySelector('input[value="Outro"]').checked);
+}
+function instrOk(form) {
+  if (!readInstr(form)) { toast("Marque o que você faz no grupo."); return false; }
+  return true;
+}
 
 /* ---------- telas ---------- */
 const VIEWS = { help: "#v-help", loading: "#v-loading", auth: "#v-auth", pending: "#v-pending", home: "#v-home", study: "#v-study", prof: "#v-prof", song: "#v-song", admin: "#v-admin" };
@@ -137,7 +163,8 @@ function profileFrom(d, email) {
 let pendingProfile = null;
 $("#f-new").addEventListener("submit", async e => {
   e.preventDefault(); $("#err-new").textContent = "";
-  const d = Object.fromEntries(new FormData(e.target));
+  if (!instrOk(e.target)) return;
+  const d = Object.fromEntries(new FormData(e.target)); d.instr = readInstr(e.target);
   const email = d.email.trim().toLowerCase();
   pendingProfile = profileFrom(d, email);
   const btn = e.target.querySelector("button[type=submit]"); btn.disabled = true;
@@ -159,7 +186,8 @@ $("#forgot").onclick = async () => {
 };
 $("#f-complete").addEventListener("submit", async e => {
   e.preventDefault();
-  const d = Object.fromEntries(new FormData(e.target));
+  if (!instrOk(e.target)) return;
+  const d = Object.fromEntries(new FormData(e.target)); d.instr = readInstr(e.target);
   try { await saveNewProfile(profileFrom(d, S.user.email.toLowerCase())); enter(); }
   catch (err) { console.error(err); $("#err-complete").textContent = "Não consegui salvar. Tente de novo."; }
 });
@@ -215,12 +243,13 @@ async function enter() {
   await dataReady;
   const p = S.profile;
   if (p.status !== "ativa" && !S.isAdmin) {
-    $("#pend-email").textContent = p.email; show("pending"); return;
+    $("#pend-email").textContent = p.email; showPendReq(); show("pending"); return;
   }
   $("#hello").textContent = "Olá, " + p.nome.split(" ")[0];
   $("#p-name").textContent = p.nome;
   const f = $("#f-prof");
-  ["nome", "whats", "cidade", "uf", "grupo", "instr"].forEach(k => f.elements[k].value = p[k] || "");
+  ["nome", "whats", "cidade", "uf", "grupo"].forEach(k => f.elements[k].value = p[k] || "");
+  fillInstr(f, p.instr);
   $("#go-admin").classList.toggle("hidden", !S.isAdmin);
   renderPromos(); renderList();
   await loadSongs(); renderList(); route();
@@ -229,12 +258,25 @@ async function enter() {
 /* ---------- perfil ---------- */
 $("#f-prof").addEventListener("submit", async e => {
   e.preventDefault();
+  if (!instrOk(e.target)) return;
   const d = Object.fromEntries(new FormData(e.target));
-  const upd = { nome: d.nome.trim(), whats: d.whats.trim(), cidade: d.cidade.trim(), uf: d.uf, grupo: d.grupo.trim(), instr: d.instr };
+  const upd = { nome: d.nome.trim(), whats: d.whats.trim(), cidade: d.cidade.trim(), uf: d.uf, grupo: d.grupo.trim(), instr: readInstr(e.target) };
   try { await updateDoc(doc(db, "users", S.user.uid), upd); Object.assign(S.profile, upd); $("#p-name").textContent = upd.nome; renderPromos(); renderList(); toast("Cadastro atualizado."); }
   catch (err) { console.error(err); toast("Não consegui salvar. Tente de novo."); }
 });
 $("#pend-out").onclick = () => $("#logout").onclick();
+function showPendReq() {
+  const sent = !!S.profile?.pedidoEm;
+  $("#pend-req").classList.toggle("hidden", sent);
+  $("#pend-ok").classList.toggle("hidden", !sent);
+}
+$("#pend-send").onclick = async () => {
+  const msg = $("#pend-msg").value.trim().slice(0, 300);
+  try {
+    await updateDoc(doc(db, "users", S.user.uid), { pedidoEm: serverTimestamp(), pedidoMsg: msg });
+    S.profile.pedidoEm = new Date(); S.profile.pedidoMsg = msg; showPendReq();
+  } catch (e) { console.error(e); toast("Não consegui enviar o pedido. Tente de novo."); }
+};
 $("#pend-retry").onclick = async () => {
   try { await refreshAccess(doc(db, "users", S.user.uid)); } catch (e) {}
   if (S.profile.status === "ativa") enter(); else toast("Ainda não encontrei seu e-mail na lista. Fale com a Janaine.");
@@ -572,7 +614,7 @@ async function loadAdmin() {
 }
 function admFiltered() {
   const q = norm($("#adm-q").value.trim()), f = $("#adm-f").value;
-  return ADM.filter(u => (!f || (f === "pendente" ? u.status === "pendente" : u.aluna === f)) && (!q || norm([u.nome, u.cidade, u.uf, u.grupo, u.email].join(" ")).includes(q)));
+  return ADM.slice().sort((a, b) => (b.status === "pendente" && b.pedidoEm ? 1 : 0) - (a.status === "pendente" && a.pedidoEm ? 1 : 0)).filter(u => (!f || (f === "pendente" ? u.status === "pendente" : u.aluna === f)) && (!q || norm([u.nome, u.cidade, u.uf, u.grupo, u.email].join(" ")).includes(q)));
 }
 function renderAdmin() {
   const week = Date.now() - 7 * 864e5;
@@ -588,12 +630,14 @@ function renderAdmin() {
     return `<div class="adm-row${u.status === "pendente" ? " pend-box" : ""}"><b>${esc(u.nome)}</b>${u.aluna === "sim" ? '<span class="tag-aluna">aluna</span>' : ""}${u.status === "pendente" ? '<span class="tag-pend">aguardando</span>' : ""}<br>
       <span class="m">${esc(u.grupo)} · ${esc(u.cidade)}/${esc(u.uf)} · ${esc(u.instr)}</span><br>
       ${esc(u.email)} · ${wa ? `<a href="${wa}" target="_blank" rel="noopener">${esc(u.whats)}</a>` : esc(u.whats)}<br>
+      ${u.status === "pendente" && u.pedidoEm ? `<div class="pedido"><b>Pediu liberação em ${fmt(tsDate(u.pedidoEm))}</b>${u.pedidoMsg ? `<br>"${esc(u.pedidoMsg)}"` : ""}</div>` : ""}
       <span class="m">Cadastro ${fmt(tsDate(u.criadoEm))} · último acesso ${fmt(tsDate(u.ultimoAcesso))} · ${u.acessos || 1} acessos</span>
       ${u.aluna !== "sim" ? `<br><button class="lib" type="button" data-lib="${esc(u.id)}">Liberar como aluna</button>` : ""}</div>`;
   }).join("") || '<div class="empty">Nenhum cadastro encontrado.</div>';
   $$("#adm-list [data-lib]").forEach(b => b.onclick = () => liberar(ADM.find(u => u.id === b.dataset.lib)));
-  const np = ADM.filter(u => u.status === "pendente").length;
-  $("#adm-pend").innerHTML = np ? `<div class="verify">${np} ${np > 1 ? "mães aguardam" : "mãe aguarda"} liberação. Escolha "Aguardando liberação" no filtro para ver.</div>` : "";
+  const pend = ADM.filter(u => u.status === "pendente"), np = pend.length, nped = pend.filter(u => u.pedidoEm).length;
+  $("#adm-pend").innerHTML = np ? `<div class="verify"><b>${nped ? `${nped} ${nped > 1 ? "pedidos" : "pedido"} de liberação.` : ""}</b> ${np} ${np > 1 ? "mães aguardam" : "mãe aguarda"} liberação.<br><button type="button" id="ver-pend">Ver quem está aguardando</button></div>` : "";
+  if (np) $("#ver-pend").onclick = () => { $("#adm-f").value = "pendente"; renderAdmin(); $("#adm-list").scrollIntoView({ behavior: "smooth" }); };
 }
 async function liberar(u) {
   try {
@@ -679,7 +723,7 @@ const STORAGE_ERR = {
   "storage/timeout": "o armazenamento não respondeu em 90 segundos. Confira no Firebase se o Storage foi criado (Storage > Começar) e se o plano Blaze está ativo.",
   "permission-denied": "o banco de dados recusou. Confira se as regras novas do Firestore foram publicadas e se o seu e-mail foi confirmado."
 };
-const loteMod = () => lote || (lote = import("./lote.js?v=29"));
+const loteMod = () => lote || (lote = import("./lote.js?v=31"));
 function renderMusicAdmin() {
   const fsSongs = S.songs.filter(x => x.storage), stat = S.songs.filter(x => !x.storage);
   const row = (x, edit) => `<div class="mu-row"><div><b>${esc(x.titulo)}</b><small>${[x.cifra || x.cifraJson ? "cifra" : "", x.partituras?.length ? x.partituras.length + (x.partituras.length > 1 ? " partituras" : " partitura") : "", x.youtube ? "YouTube" : x.audio ? "áudio" : ""].filter(Boolean).join(" · ") || "sem arquivos"}</small></div>${edit ? `<button type="button" data-ed="${esc(x.id)}">Editar</button><button type="button" data-rm="${esc(x.id)}">Remover</button>` : ""}</div>`;

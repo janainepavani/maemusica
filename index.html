@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=29">
+<link rel="stylesheet" href="styles.css?v=31">
 </head>
 <body>
 <div class="app" id="app">
@@ -48,7 +48,8 @@
           <div class="field uf"><label for="n-uf">Estado</label><select id="n-uf" name="uf" required class="uf-select"></select></div>
         </div>
         <div class="field"><label for="n-grupo">Nome do seu grupo</label><input id="n-grupo" name="grupo" required placeholder="Ex.: Grupo Nossa Senhora Aparecida"></div>
-        <div class="field"><label for="n-instr">Instrumento principal</label><select id="n-instr" name="instr" required class="instr-select"></select></div>
+        <div class="field"><label>O que você faz no grupo? <small>(pode marcar mais de um)</small></label><div class="instr-group" data-form="n"></div>
+          <input class="instr-outro hidden" name="instrOutro" placeholder="Qual? Ex.: flauta, regência, coordenação"></div>
         <div class="field"><label for="n-senha">Crie uma senha</label><input id="n-senha" name="senha" type="password" minlength="6" required autocomplete="new-password" placeholder="mínimo 6 caracteres"></div>
         <div class="err" id="err-new"></div>
         <button class="btn-gold" type="submit">Criar minha conta</button>
@@ -69,7 +70,8 @@
           <div class="field uf"><label for="c-uf">Estado</label><select id="c-uf" name="uf" required class="uf-select"></select></div>
         </div>
         <div class="field"><label for="c-grupo">Nome do seu grupo</label><input id="c-grupo" name="grupo" required></div>
-        <div class="field"><label for="c-instr">Instrumento principal</label><select id="c-instr" name="instr" required class="instr-select"></select></div>
+        <div class="field"><label>O que você faz no grupo? <small>(pode marcar mais de um)</small></label><div class="instr-group" data-form="c"></div>
+          <input class="instr-outro hidden" name="instrOutro" placeholder="Qual? Ex.: flauta, regência, coordenação"></div>
         <div class="err" id="err-complete"></div>
         <button class="btn-gold" type="submit">Entrar no repertório</button>
       </form>
@@ -85,8 +87,14 @@
     </div>
     <div class="auth-card pend">
       <p>Por enquanto, o Repertório é só para quem já fez algum curso de música das Mães que Oram com a Janaine.</p>
-      <p>Não encontrei o e-mail <b id="pend-email"></b> na lista de alunas. Se você comprou o curso com outro e-mail, fale com a Janaine pelo WhatsApp que ela libera o seu acesso.</p>
-      <a class="btn-gold" id="pend-whats" target="_blank" rel="noopener">Falar com a Janaine</a>
+      <p>Não encontrei o e-mail <b id="pend-email"></b> na lista de alunas. Se você já fez algum curso, ou comprou com outro e-mail, peça a liberação aqui embaixo.</p>
+      <div class="pend-req" id="pend-req">
+        <div class="field"><label for="pend-msg">Pedir liberação para a Janaine</label>
+          <textarea id="pend-msg" rows="3" placeholder="Opcional: conte qual curso você fez ou com qual e-mail comprou"></textarea></div>
+        <button class="btn-gold" type="button" id="pend-send">Pedir liberação</button>
+      </div>
+      <p class="pend-ok hidden" id="pend-ok">Pedido enviado. A Janaine vai conferir e liberar o seu acesso. Quando ela liberar, é só tocar em "Já fui liberada, entrar de novo".</p>
+      <a class="btn-line" id="pend-whats" target="_blank" rel="noopener">Falar com a Janaine no WhatsApp</a>
       <a class="btn-line cta-curso" target="_blank" rel="noopener">Conhecer os cursos</a>
       <button class="link-btn" type="button" id="pend-retry">Já fui liberada, entrar de novo</button>
       <button class="link-btn" type="button" id="pend-out">Sair</button>
@@ -335,7 +343,8 @@
           <div class="field uf"><label for="p-uf">Estado</label><select id="p-uf" name="uf" required class="uf-select"></select></div>
         </div>
         <div class="field"><label for="p-grupo">Nome do seu grupo</label><input id="p-grupo" name="grupo" required></div>
-        <div class="field"><label for="p-instr">Instrumento principal</label><select id="p-instr" name="instr" required class="instr-select"></select></div>
+        <div class="field"><label>O que você faz no grupo? <small>(pode marcar mais de um)</small></label><div class="instr-group" data-form="p"></div>
+          <input class="instr-outro hidden" name="instrOutro" placeholder="Qual? Ex.: flauta, regência, coordenação"></div>
         <button class="btn-navy" type="submit">Salvar alterações</button>
       </form>
       <button class="admin-link hidden" id="go-admin" type="button">Painel de cadastros</button>
@@ -400,6 +409,6 @@
     <div class="viewer-pages" id="v-pages"></div>
   </div>
 </div>
-<script type="module" src="app.js?v=29"></script>
+<script type="module" src="app.js?v=31"></script>
 </body>
 </html>
