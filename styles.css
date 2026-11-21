@@ -303,3 +303,17 @@ input,select{font:inherit}
 .aluna-b a.cta{margin-top:0;text-decoration:none}
 .promo.aluna .cta-line{background:transparent;color:var(--navy-deep);border:1.5px solid var(--navy-deep)}
 .aluna-n{font-size:13px!important;margin-top:8px!important;opacity:.8}
+
+.aluna-help{display:inline-block;margin-top:10px;color:var(--navy-deep);font-weight:700;font-size:14px;text-decoration:underline}
+.guide{font-size:16px;line-height:1.6;color:var(--ink)}
+.guide h2{color:var(--navy);font-size:19px;margin:26px 0 8px;line-height:1.3}
+.guide h3{color:var(--navy);font-size:16px;margin:18px 0 6px}
+.guide p{margin:8px 0}
+.guide ol,.guide ul{margin:8px 0 8px 22px}
+.guide li{margin:5px 0}
+.guide blockquote{margin:12px 0;padding:10px 14px;background:#FFF6DA;border-left:4px solid var(--gold);border-radius:6px}
+.guide table{width:100%;border-collapse:collapse;margin:10px 0;font-size:15px}
+.guide th,.guide td{border:1px solid var(--line);padding:8px;text-align:left;vertical-align:top;background:#fff}
+.guide th{background:var(--paper);color:var(--navy)}
+.guide a{color:var(--navy-2);font-weight:500}
+.guide strong{color:var(--navy)}

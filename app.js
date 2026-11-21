@@ -13,7 +13,7 @@ import {
 import {
   getStorage, ref as sref, uploadBytes, getDownloadURL, listAll, deleteObject
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=28";
+import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=29";
 
 const fb = initializeApp(firebaseConfig);
 const auth = getAuth(fb);
@@ -41,13 +41,13 @@ $$(".uf-select").forEach(s => s.innerHTML = '<option value="">UF</option>' + UFS
 $$(".instr-select").forEach(s => s.innerHTML = '<option value="">Escolha</option>' + INSTR.map(u => `<option>${u}</option>`).join(""));
 
 /* ---------- telas ---------- */
-const VIEWS = { loading: "#v-loading", auth: "#v-auth", pending: "#v-pending", home: "#v-home", study: "#v-study", prof: "#v-prof", song: "#v-song", admin: "#v-admin" };
-const HASH = { home: "", study: "cursos", prof: "perfil", admin: "painel" };
+const VIEWS = { help: "#v-help", loading: "#v-loading", auth: "#v-auth", pending: "#v-pending", home: "#v-home", study: "#v-study", prof: "#v-prof", song: "#v-song", admin: "#v-admin" };
+const HASH = { home: "", study: "cursos", prof: "perfil", admin: "painel", help: "como-entrar" };
 function show(v) {
   Object.entries(VIEWS).forEach(([k, s]) => $(s).classList.toggle("hidden", k !== v));
   const inApp = !["loading", "auth", "pending"].includes(v);
   $("#nav").classList.toggle("hidden", !inApp);
-  $$(".nav button").forEach(b => b.classList.toggle("on", b.dataset.go === v || (v === "song" && b.dataset.go === "home") || (v === "admin" && b.dataset.go === "prof")));
+  $$(".nav button").forEach(b => b.classList.toggle("on", b.dataset.go === v || (v === "song" && b.dataset.go === "home") || (v === "admin" && b.dataset.go === "prof") || (v === "help" && b.dataset.go === "study")));
   $("#float-cta").classList.toggle("hidden", !(v === "song" && cur?.curso));
   stopScroll(); window.scrollTo(0, 0);
 }
@@ -67,10 +67,12 @@ function route() {
   if (h.startsWith("musica-")) { const s = S.songs.find(x => x.id === h.slice(7)); if (s) return openSong(s.id, false); }
   if (h === "cursos") return go("study", false);
   if (h === "perfil") return go("prof", false);
+  if (h === "como-entrar") return go("help", false);
   if (h === "painel" && S.isAdmin) return go("admin", false);
   go("home", false);
 }
 window.addEventListener("popstate", route);
+window.addEventListener("hashchange", route);
 
 /* ---------- dados ---------- */
 async function loadData() {
@@ -274,8 +276,10 @@ function renderPromos() {
   $("#study-top").innerHTML = isAluna()
     ? `<div class="promo aluna" style="margin-bottom:14px"><div class="in"><div class="k">Área da aluna</div><h3>Continue suas aulas</h3><p>Entre direto nos seus cursos na Nutror, com o seu e-mail e senha.</p>
         <div class="aluna-b"><a class="cta" href="${L.nutror}" target="_blank" rel="noopener">Entrar pelo navegador ›</a>${appNutror() ? `<a class="cta cta-line" href="${appNutror()}" target="_blank" rel="noopener">Usar o aplicativo da Nutror</a>` : ""}</div>
-        ${appNutror() ? `<p class="aluna-n">No aplicativo, toque em Abrir se ele já estiver instalado.</p>` : ""}</div></div>`
-    : `<a class="nutror" href="${L.nutror}" target="_blank" rel="noopener" style="margin:0 0 14px"><div><b>Já é aluna?</b><br><span>Entre nas suas aulas na Nutror</span></div><div style="font-size:22px;color:var(--gold)">›</div></a>`;
+        ${appNutror() ? `<p class="aluna-n">No aplicativo, toque em Abrir se ele já estiver instalado.</p>` : ""}
+        <a class="aluna-help" href="#como-entrar">Não consegue entrar? Veja o passo a passo ›</a></div></div>`
+    : `<a class="nutror" href="${L.nutror}" target="_blank" rel="noopener" style="margin:0 0 6px"><div><b>Já é aluna?</b><br><span>Entre nas suas aulas na Nutror</span></div><div style="font-size:22px;color:var(--gold)">›</div></a>
+       <a class="aluna-help" href="#como-entrar" style="margin:0 0 14px 4px;color:var(--navy)">Como entrar nas aulas: passo a passo ›</a>`;
   const MAES = "https://www.janainepavani.com/maes";
   const modRow = m => `<div class="mod"><b>${esc(m.nome)}</b><div class="mod-b">
       ${m.entrar ? `<a class="mod-in" href="${esc(m.entrar)}" target="_blank" rel="noopener">Entrar</a>` : ""}
@@ -675,7 +679,7 @@ const STORAGE_ERR = {
   "storage/timeout": "o armazenamento não respondeu em 90 segundos. Confira no Firebase se o Storage foi criado (Storage > Começar) e se o plano Blaze está ativo.",
   "permission-denied": "o banco de dados recusou. Confira se as regras novas do Firestore foram publicadas e se o seu e-mail foi confirmado."
 };
-const loteMod = () => lote || (lote = import("./lote.js?v=28"));
+const loteMod = () => lote || (lote = import("./lote.js?v=29"));
 function renderMusicAdmin() {
   const fsSongs = S.songs.filter(x => x.storage), stat = S.songs.filter(x => !x.storage);
   const row = (x, edit) => `<div class="mu-row"><div><b>${esc(x.titulo)}</b><small>${[x.cifra || x.cifraJson ? "cifra" : "", x.partituras?.length ? x.partituras.length + (x.partituras.length > 1 ? " partituras" : " partitura") : "", x.youtube ? "YouTube" : x.audio ? "áudio" : ""].filter(Boolean).join(" · ") || "sem arquivos"}</small></div>${edit ? `<button type="button" data-ed="${esc(x.id)}">Editar</button><button type="button" data-rm="${esc(x.id)}">Remover</button>` : ""}</div>`;
@@ -882,3 +886,5 @@ $("#mu-test").onclick = async () => {
     out.textContent = (out.textContent.replace(" · enviando arquivo de teste...", "") + ` · falhou: ${e.code || ""} ${e.message || e}`).slice(0, 500);
   }
 };
+
+$("#help-back").onclick = () => history.length > 1 ? history.back() : go("study");
