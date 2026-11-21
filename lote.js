@@ -4,7 +4,7 @@
 // - cifra (PDF com "cifra" no nome): vira texto com acordes, para trocar o tom;
 // - grade / full score, partes / banda e outros PDFs: cada página vira imagem;
 // - áudio (mp3, m4a, wav): vai como está, para as músicas que não têm YouTube.
-import { parseCifraPdf } from "./cifra.js?v=9";
+import { parseCifraPdf } from "./cifra.js?v=10";
 
 const AUDIO_EXT = ["mp3", "m4a", "aac", "wav", "ogg"];
 const GENERIC = new Set(["partituras", "partitura", "cifras", "cifra", "pdf", "pdfs", "audios", "audio", "musicas", "repertorio", "arquivos", "amo", "maes que oram"]);
@@ -18,8 +18,8 @@ function typeOf(name) {
   if (AUDIO_EXT.includes(ext)) return "audio";
   if (ext !== "pdf") return "ignorar";
   if (/cifra/.test(n)) return "cifra";
-  if (/grade|full ?score|score completo|partitura completa/.test(n)) return "grade";
   if (/parte|banda/.test(n)) return "banda";
+  if (/grade|full ?score|score completo|partitura completa/.test(n)) return "grade";
   return "partitura";
 }
 // "Oração pela família AMO - Full Score-GRADE_V3.pdf" -> "oracao pela familia"
@@ -111,11 +111,15 @@ const DESC = {
 export async function sendSong(g, api) {
   const id = g.existe ? g.id : (slug(g.titulo) || g.id);
   const data = { titulo: g.titulo.trim(), autor: g.autor.trim(), youtube: g.youtube.trim(), curso: !!g.curso };
+  const units = Math.max(1, g.files.length) + 0.2; let doneU = 0;
+  const prog = f => api.progress?.(Math.min(1, (doneU + f) / units));
+  prog(0);
   const cif = g.files.find(x => x.type === "cifra");
   let cifraComoImagem = null;
   if (cif) {
     api.log("lendo a cifra");
     const r = await parseCifraPdf(await openPdf(cif.file));
+    doneU += 1; prog(0);
     if (r.versoes.length) {
       data.cifraJson = JSON.stringify(r.versoes);
       data.tons = [...new Set(r.versoes.map(v => v.tom))];
@@ -132,13 +136,17 @@ export async function sendSong(g, api) {
     data.partituras = [];
     for (const [i, pf] of parts.entries()) {
       const pdf = await openPdf(pf.file);
-      const blobs = await renderPages(pdf, (p, n) => api.log(`${(TYPE_LABEL[pf.type] || "cifra").toLowerCase()}: página ${p} de ${n}`));
+      const rotulo = (TYPE_LABEL[pf.type] || "cifra").toLowerCase();
+      const isCifraImg = pf.type === "cifraimg";
+      const blobs = await renderPages(pdf, (p, n) => { api.log(`${rotulo}: preparando página ${p} de ${n}`); if (!isCifraImg) prog(0.4 * p / n); });
       const paginas = [];
       for (const [j, b] of blobs.entries()) {
         const path = `songs/${id}/${pf.type}-${i + 1}-${j + 1}.png`;
-        api.log(`enviando página ${j + 1} de ${blobs.length}`);
+        api.log(`${rotulo}: enviando página ${j + 1} de ${blobs.length}`);
         await api.upload(path, b, "image/png"); paginas.push(path);
+        if (!isCifraImg) prog(0.4 + 0.6 * (j + 1) / blobs.length);
       }
+      if (!isCifraImg) { doneU += 1; prog(0); }
       const [nome, desc] = DESC[pf.type] || [prettyTitle(songKey(pf.file.name)) || "Partitura", "Partitura"];
       data.partituras.push({ nome, desc, paginas });
     }
@@ -149,9 +157,11 @@ export async function sendSong(g, api) {
     api.log("enviando o áudio");
     const path = `songs/${id}/audio.${ext}`;
     await api.upload(path, aud.file, aud.file.type || "audio/mpeg"); data.audio = path;
+    doneU += 1; prog(0);
   }
   api.log("salvando");
   await api.save(id, data);
+  api.progress?.(1);
   return id;
 }
 

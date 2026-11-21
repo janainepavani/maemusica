@@ -262,3 +262,11 @@ input,select{font:inherit}
 .course a{display:block;text-align:center;margin-top:14px;padding:13px;border-radius:12px;background:var(--navy);color:#fff;text-decoration:none;font-weight:700}
 .course.feat{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
 .course.feat a{background:var(--gold);color:var(--navy-deep)}
+
+.mu-bar{height:6px;border-radius:4px;background:#E8E1CF;overflow:hidden;margin-top:10px}
+.mu-bar i{display:block;height:100%;width:0;background:var(--gold);border-radius:4px;transition:width .3s}
+.mu-bar.big{height:12px;border-radius:8px}
+.mu-bar.big i{background:var(--navy)}
+.mu-total{margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;position:sticky;bottom:calc(84px + env(safe-area-inset-bottom));z-index:6;box-shadow:0 4px 14px rgba(2,47,98,.12)}
+.mu-total-t{display:flex;justify-content:space-between;gap:10px;font-size:14px;color:var(--navy)}
+.mu-total-t span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

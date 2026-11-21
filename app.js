@@ -13,7 +13,7 @@ import {
 import {
   getStorage, ref as sref, uploadBytes, getDownloadURL, listAll, deleteObject
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=9";
+import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=10";
 
 const fb = initializeApp(firebaseConfig);
 const auth = getAuth(fb);
@@ -634,7 +634,7 @@ const STORAGE_ERR = {
   "storage/retry-limit-exceeded": "a internet caiu no meio do envio. Tente de novo.",
   "permission-denied": "o banco de dados recusou. Confira se as regras novas do Firestore foram publicadas e se o seu e-mail foi confirmado."
 };
-const loteMod = () => lote || (lote = import("./lote.js?v=9"));
+const loteMod = () => lote || (lote = import("./lote.js?v=10"));
 function renderMusicAdmin() {
   const fsSongs = S.songs.filter(x => x.storage), stat = S.songs.filter(x => !x.storage);
   const row = (x, edit) => `<div class="mu-row"><div><b>${esc(x.titulo)}</b><small>${[x.cifra || x.cifraJson ? "cifra" : "", x.partituras?.length ? x.partituras.length + (x.partituras.length > 1 ? " partituras" : " partitura") : "", x.youtube ? "YouTube" : x.audio ? "áudio" : ""].filter(Boolean).join(" · ") || "sem arquivos"}</small></div>${edit ? `<button type="button" data-ed="${esc(x.id)}">Editar</button><button type="button" data-rm="${esc(x.id)}">Remover</button>` : ""}</div>`;
@@ -678,8 +678,9 @@ async function renderReview() {
       <div class="field"><label>Link do YouTube (se tiver)</label><input type="url" data-k="youtube" value="${esc(g.youtube)}" placeholder="https://youtu.be/..."></div>
       <label class="mu-chk"><input type="checkbox" data-k="curso" ${g.curso ? "checked" : ""}> Tem aula no curso</label>
       ${g.files.map((f, j) => `<div class="mu-file"><span>${esc(f.file.name)}</span><select data-f="${j}">${Object.entries(L.TYPE_LABEL).map(([k, v]) => `<option value="${k}" ${k === f.type ? "selected" : ""}>${v}</option>`).join("")}</select></div>`).join("")}
-      <div class="mu-status">${esc(g.aviso || "")}</div></div>`).join("")
-    + `<div class="mu-actions"><button class="mu-cancel" type="button" id="mu-cancel">Cancelar</button><button class="mu-send" type="button" id="mu-send">Enviar ${REVIEW.length} ${REVIEW.length > 1 ? "músicas" : "música"}</button></div>`;
+      <div class="mu-bar hidden"><i></i></div><div class="mu-status">${esc(g.aviso || "")}</div></div>`).join("")
+    + `<div class="mu-total hidden" id="mu-total"><div class="mu-total-t"><span id="mu-total-l"></span><b id="mu-total-p">0%</b></div><div class="mu-bar big"><i id="mu-total-i"></i></div></div>
+    <div class="mu-actions"><button class="mu-cancel" type="button" id="mu-cancel">Cancelar</button><button class="mu-send" type="button" id="mu-send">Enviar ${REVIEW.length} ${REVIEW.length > 1 ? "músicas" : "música"}</button></div>`;
   $$("#mu-review .mu-card").forEach(card => {
     const g = REVIEW[+card.dataset.g];
     card.querySelectorAll("[data-k]").forEach(inp => inp.oninput = inp.onchange = () => { g[inp.dataset.k] = inp.type === "checkbox" ? inp.checked : inp.value; });
@@ -700,7 +701,18 @@ async function sendAll() {
   sending = true;
   $("#mu-send").disabled = true; $("#mu-cancel").disabled = true; $("#mu-send").textContent = "Enviando...";
   let ok = 0, erro = "";
+  const n = REVIEW.length;
+  const total = $("#mu-total"); total.classList.remove("hidden");
+  const setTotal = (i, f) => {
+    const pct = Math.round(((i + f) / n) * 100);
+    $("#mu-total-i").style.width = pct + "%"; $("#mu-total-p").textContent = pct + "%";
+    $("#mu-total-l").textContent = i < n ? `Música ${i + 1} de ${n}: ${REVIEW[i].titulo}` : "Concluído";
+  };
+  total.scrollIntoView({ behavior: "smooth", block: "center" });
   for (const [i, g] of REVIEW.entries()) {
+    const card = $(`#mu-review .mu-card[data-g="${i}"]`);
+    const bar = card?.querySelector(".mu-bar"); bar?.classList.remove("hidden");
+    setTotal(i, 0);
     const st = () => $(`#mu-review .mu-card[data-g="${i}"] .mu-status`) || { set className(v) {}, set textContent(v) {} };
     const log = t => { g.msg = t; const e = st(); e.className = "mu-status"; e.textContent = t; };
     g.files = g.files.filter(f => f.type !== "ignorar");
@@ -708,6 +720,7 @@ async function sendAll() {
     try {
       await L.sendSong(g, {
         log,
+        progress: f => { if (bar) bar.firstElementChild.style.width = Math.round(f * 100) + "%"; setTotal(i, f); },
         upload: (path, blob, type) => uploadBytes(sref(storage, path), blob, { contentType: type }),
         save: (id, data) => setDoc(doc(db, "songs", id), { ...data, updatedAt: serverTimestamp() }, { merge: true })
       });
@@ -720,6 +733,7 @@ async function sendAll() {
       if (STORAGE_ERR[err?.code] && err.code !== "storage/retry-limit-exceeded") break; // o mesmo erro vai se repetir nas outras
     }
   }
+  setTotal(n, 0);
   sending = false;
   urlCache.clear(); Object.keys(cifraCache).forEach(k => delete cifraCache[k]);
   await loadSongs(); renderList(); renderMusicAdmin();
