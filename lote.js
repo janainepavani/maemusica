@@ -4,7 +4,7 @@
 // - cifra (PDF com "cifra" no nome): vira texto com acordes, para trocar o tom;
 // - grade / full score, partes / banda e outros PDFs: cada página vira imagem;
 // - áudio (mp3, m4a, wav): vai como está, para as músicas que não têm YouTube.
-import { parseCifraPdf } from "./cifra.js?v=16";
+import { parseCifraPdf } from "./cifra.js?v=17";
 
 const AUDIO_EXT = ["mp3", "m4a", "aac", "wav", "ogg"];
 const GENERIC = new Set(["partituras", "partitura", "cifras", "cifra", "pdf", "pdfs", "audios", "audio", "musicas", "repertorio", "arquivos", "amo", "maes que oram"]);
