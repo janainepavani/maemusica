@@ -270,3 +270,6 @@ input,select{font:inherit}
 .mu-total{margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;position:sticky;bottom:calc(84px + env(safe-area-inset-bottom));z-index:6;box-shadow:0 4px 14px rgba(2,47,98,.12)}
 .mu-total-t{display:flex;justify-content:space-between;gap:10px;font-size:14px;color:var(--navy)}
 .mu-total-t span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.course a.entrar{background:#fff;color:var(--navy);border:1.5px solid var(--navy)}
+.course.feat a.entrar{background:#fff;color:var(--navy-deep);border-color:var(--gold)}

@@ -13,7 +13,7 @@ import {
 import {
   getStorage, ref as sref, uploadBytes, getDownloadURL, listAll, deleteObject
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=10";
+import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=11";
 
 const fb = initializeApp(firebaseConfig);
 const auth = getAuth(fb);
@@ -267,6 +267,7 @@ function renderPromos() {
   $("#study-list").innerHTML = S.cursos.map((c, i) => `<div class="course${i ? "" : " feat"}">
       ${c.selo ? `<div class="k">${esc(c.selo)}</div>` : ""}<h3>${esc(c.nome)}</h3><p>${esc(c.texto)}</p>
       ${c.detalhes.length ? `<ul>${c.detalhes.map(d => `<li>${esc(d)}</li>`).join("")}</ul>` : ""}
+      ${c.entrar ? `<a class="entrar" href="${esc(c.entrar)}" target="_blank" rel="noopener">Já comprei: entrar no curso</a>` : ""}
       <a href="${esc(c.link)}" target="_blank" rel="noopener">${esc(c.botao || "Quero me inscrever")}</a></div>`).join("");
   startCarousel();
 }
@@ -634,7 +635,7 @@ const STORAGE_ERR = {
   "storage/retry-limit-exceeded": "a internet caiu no meio do envio. Tente de novo.",
   "permission-denied": "o banco de dados recusou. Confira se as regras novas do Firestore foram publicadas e se o seu e-mail foi confirmado."
 };
-const loteMod = () => lote || (lote = import("./lote.js?v=10"));
+const loteMod = () => lote || (lote = import("./lote.js?v=11"));
 function renderMusicAdmin() {
   const fsSongs = S.songs.filter(x => x.storage), stat = S.songs.filter(x => !x.storage);
   const row = (x, edit) => `<div class="mu-row"><div><b>${esc(x.titulo)}</b><small>${[x.cifra || x.cifraJson ? "cifra" : "", x.partituras?.length ? x.partituras.length + (x.partituras.length > 1 ? " partituras" : " partitura") : "", x.youtube ? "YouTube" : x.audio ? "áudio" : ""].filter(Boolean).join(" · ") || "sem arquivos"}</small></div>${edit ? `<button type="button" data-ed="${esc(x.id)}">Editar</button><button type="button" data-rm="${esc(x.id)}">Remover</button>` : ""}</div>`;

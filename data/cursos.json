@@ -24,7 +24,8 @@
         "h": "Aulas curtas, uma música de cada vez",
         "p": "Fica Conosco, Oração pela Família, Terço da Eucaristia e mais."
       }
-    ]
+    ],
+    "entrar": ""
   },
   {
     "id": "cantoras",
@@ -50,7 +51,8 @@
         "h": "Microfone, caixa de som e mesa sem mistério",
         "p": "Uma aula só sobre equipamentos de som, com a Janaine."
       }
-    ]
+    ],
+    "entrar": ""
   },
   {
     "id": "formacao1",
@@ -72,7 +74,8 @@
         "h": "Entenda o que você canta e toca",
         "p": "Ritmo, notas e acordes explicados com calma, aula por aula."
       }
-    ]
+    ],
+    "entrar": ""
   },
   {
     "id": "formacao2",
@@ -89,7 +92,8 @@
         "h": "Terminou a Formação Musical 1? A próxima etapa já está pronta",
         "p": "A teoria continua, agora com músicas novas como Oração de Louvor."
       }
-    ]
+    ],
+    "entrar": ""
   },
   {
     "id": "teclado1",
@@ -107,7 +111,8 @@
         "h": "Acompanhar o seu grupo no teclado",
         "p": "Do zero, com acordes que já servem para as músicas do movimento."
       }
-    ]
+    ],
+    "entrar": ""
   },
   {
     "id": "violao1",
@@ -125,7 +130,8 @@
         "h": "Seus primeiros acordes no violão",
         "p": "Do zero, tocando as músicas que o seu grupo já canta."
       }
-    ]
+    ],
+    "entrar": ""
   },
   {
     "id": "missao",
