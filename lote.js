@@ -4,11 +4,11 @@
 // - cifra (PDF com "cifra" no nome): vira texto com acordes, para trocar o tom;
 // - grade / full score, partes / banda e outros PDFs: cada página vira imagem;
 // - áudio (mp3, m4a, wav): vai como está, para as músicas que não têm YouTube.
-import { parseCifraPdf } from "./cifra.js?v=23";
+import { parseCifraPdf } from "./cifra.js?v=24";
 
 const AUDIO_EXT = ["mp3", "m4a", "aac", "wav", "ogg"];
 const GENERIC = new Set(["partituras", "partitura", "cifras", "cifra", "pdf", "pdfs", "audios", "audio", "musicas", "repertorio", "arquivos", "amo", "maes que oram"]);
-const TYPE_LABEL = { cifra: "Cifra", grade: "Grade completa", banda: "Partes da banda", partitura: "Partitura", audio: "Áudio", ignorar: "Não enviar" };
+const TYPE_LABEL = { cifra: "Cifra", grade: "Grade completa", banda: "Partes da banda", harmonia: "Harmonia vocal", harmsimp: "Harmonia vocal simplificada", partitura: "Partitura", audio: "Áudio", ignorar: "Não enviar" };
 
 export const norm = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 export const slug = s => norm(s).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -18,6 +18,7 @@ function typeOf(name) {
   if (AUDIO_EXT.includes(ext)) return "audio";
   if (ext !== "pdf") return "ignorar";
   if (/cifra/.test(n)) return "cifra";
+  if (/harmonia|vozes|satb/.test(n)) return /simplific/.test(n) ? "harmsimp" : "harmonia";
   if (/parte|banda/.test(n)) return "banda";
   if (/grade|full ?score|score completo|partitura completa/.test(n)) return "grade";
   return "partitura";
@@ -27,7 +28,7 @@ function songKey(name) {
   let n = norm(name).replace(/\.[a-z0-9]+$/, "");
   n = n.replace(/^\s*\d+\s*[._-]\s*/, ""); // "02. Repertório..."
   n = n.replace(/[^a-z0-9]+/g, " ");
-  n = n.replace(/\b(cifra|cifras|grade|full|score|partes?|banda|amo|jp|v\d+|final|versao|partitura|completa|audio|guia|mp3|repertorio|novo|nova|atualizado|atualizada|revisado|revisada|arranjo|arr|pdf|parte)\b/g, " ");
+  n = n.replace(/\b(cifra|cifras|grade|full|score|partes?|banda|amo|jp|v\d+|final|versao|partitura|completa|audio|guia|mp3|repertorio|novo|nova|atualizado|atualizada|revisado|revisada|arranjo|arr|pdf|parte|harmonia|vocal|vocais|voz|vozes|simplificada|simplificado|simples|rev|revisao|abertura|coral|satb|soprano|contralto|tenor|baixo|f)\b/g, " ");
   n = n.replace(/\b\d+\b/g, " "); // números soltos, como "2" ou "2026"
   return n.replace(/[^a-z0-9]+/g, " ").trim();
 }
@@ -105,7 +106,9 @@ export async function peekCifra(file) {
 const DESC = {
   cifraimg: ["Cifra em PDF", "A cifra como no arquivo original"],
   grade: ["Grade completa", "Voz, cifra e acompanhamento"],
-  banda: ["Partes da banda", "Cifra para a banda"]
+  banda: ["Partes da banda", "Cifra para a banda"],
+  harmonia: ["Harmonia vocal", "As vozes do arranjo"],
+  harmsimp: ["Harmonia vocal simplificada", "As vozes numa versão mais simples"]
 };
 
 // envia uma música; api = { upload(path, blob, type), save(id, data), log(text) }
@@ -129,10 +132,10 @@ export async function sendSong(g, api) {
     }
     cifraComoImagem = cif;
   }
-  const parts = g.files.filter(x => ["grade", "banda", "partitura"].includes(x.type));
+  const parts = g.files.filter(x => ["grade", "banda", "harmonia", "harmsimp", "partitura"].includes(x.type));
   if (cifraComoImagem) parts.unshift({ file: cifraComoImagem.file, type: "cifraimg" });
   if (parts.length) {
-    const order = { cifraimg: -1, grade: 0, banda: 1, partitura: 2 };
+    const order = { cifraimg: -1, grade: 0, banda: 1, harmonia: 2, harmsimp: 3, partitura: 4 };
     parts.sort((a, b) => order[a.type] - order[b.type]);
     data.partituras = [];
     for (const [i, pf] of parts.entries()) {
@@ -155,7 +158,7 @@ export async function sendSong(g, api) {
     const novos = new Set(data.partituras.map(p => p.nome));
     if (novos.has("Cifra em PDF")) novos.add("Cifra");
     data.partituras.push(...(g.antigas || []).filter(p => !novos.has(p.nome)));
-    const ordem = ["Cifra em PDF", "Cifra", "Grade completa", "Partes da banda"];
+    const ordem = ["Cifra em PDF", "Cifra", "Grade completa", "Partes da banda", "Harmonia vocal", "Harmonia vocal simplificada"];
     data.partituras.sort((a, b) => (ordem.indexOf(a.nome) + 1 || 9) - (ordem.indexOf(b.nome) + 1 || 9));
   }
   const aud = g.files.find(x => x.type === "audio");
