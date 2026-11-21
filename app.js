@@ -13,7 +13,7 @@ import {
 import {
   getStorage, ref as sref, uploadBytes, getDownloadURL, listAll, deleteObject
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=19";
+import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=20";
 
 const fb = initializeApp(firebaseConfig);
 const auth = getAuth(fb);
@@ -338,7 +338,7 @@ const keyRoot = k => k.replace(/m$/, "");
 let cur = null, versions = null, lvl = "intermediário", key = null, fsz = 15;
 async function openSong(id, push = true) {
   cur = S.songs.find(s => s.id === id); if (!cur) return;
-  lvl = "intermediário"; key = null; lastV = null;
+  key = null; lastV = null;
   $("#s-title").textContent = cur.titulo; $("#s-by").textContent = cur.autor;
   $("#study-h").textContent = "Aprenda " + cur.titulo + " em aulas curtas";
   const L = S.cfg.links;
@@ -360,8 +360,10 @@ async function openSong(id, push = true) {
     if (!versions?.length) { $("#cifra").innerHTML = '<span class="ly" style="color:var(--muted);white-space:normal;font-family:inherit">Esta cifra ainda não tem troca de tom. Para ver a cifra, toque em <b>Partituras</b>, logo acima.</span>'; $("#s-meta").innerHTML = ""; $(".controls").classList.add("hidden"); return; }
     $(".controls").classList.remove("hidden");
     const lv = [...new Set(versions.map(v => v.nivel))];
-    if (!lv.includes(lvl)) lvl = lv[0];
-    $$("#pane-cifra .lvl button").forEach(b => { b.classList.toggle("on", b.dataset.lvl === lvl); b.classList.toggle("hidden", !lv.includes(b.dataset.lvl)); });
+    lvl = lv[0];
+    $("#lvl").classList.toggle("hidden", lv.length < 2);
+    $("#lvl").innerHTML = lv.map(n => `<button data-lvl="${esc(n)}" type="button" class="${n === lvl ? "on" : ""}">${esc(n.charAt(0).toUpperCase() + n.slice(1))}</button>`).join("");
+    $$("#lvl button").forEach(b => b.onclick = () => { lvl = b.dataset.lvl; key = null; $$("#lvl button").forEach(x => x.classList.toggle("on", x === b)); renderCifra(); });
     renderCifra();
   } catch (e) { $("#cifra").innerHTML = '<span class="ly">Não consegui abrir a cifra. Verifique a internet.</span>'; }
 }
@@ -394,7 +396,7 @@ function renderCifra() {
   const flat = FLATKEYS.has(keyRoot(key));
   $("#k-val").textContent = key;
   $("#k-reset").classList.toggle("hidden", key === base.tom);
-  $("#s-meta").innerHTML = `Nível <b>${esc(lvl)}</b> · Tom <b>${esc(key)}</b> · Compasso <b>${esc(v.compasso)}</b> · ♪ = <b>${esc(v.bpm)}</b>` + (key !== base.tom ? ` · <span style="color:var(--gold-dark)">tom original ${esc(base.tom)}</span>` : "");
+  $("#s-meta").innerHTML = [`Nível <b>${esc(lvl)}</b>`, `Tom <b>${esc(key)}</b>`, v.compasso ? `Compasso <b>${esc(v.compasso)}</b>` : "", v.bpm ? `♪ = <b>${esc(v.bpm)}</b>` : ""].filter(Boolean).join(" · ") + (key !== base.tom ? ` · <span style="color:var(--gold-dark)">tom original ${esc(base.tom)}</span>` : "");
   lastV = v; lastSt = st; lastFlat = flat;
   drawCifra();
 }
@@ -468,7 +470,7 @@ function drawCifra() {
   el.innerHTML = out.join("");
 }
 window.addEventListener("resize", () => { if (!$("#v-song").classList.contains("hidden")) drawCifra(); });
-$$("#pane-cifra .lvl button").forEach(b => b.onclick = () => { lvl = b.dataset.lvl; $$("#pane-cifra .lvl button").forEach(x => x.classList.toggle("on", x === b)); renderCifra(); });
+
 function shiftKey(d) {
   const minor = key.endsWith("m"); const r = keyRoot(key);
   const i = KEYNAMES.indexOf(r) >= 0 ? KEYNAMES.indexOf(r) : pc(r);
@@ -644,7 +646,7 @@ const STORAGE_ERR = {
   "storage/timeout": "o armazenamento não respondeu em 90 segundos. Confira no Firebase se o Storage foi criado (Storage > Começar) e se o plano Blaze está ativo.",
   "permission-denied": "o banco de dados recusou. Confira se as regras novas do Firestore foram publicadas e se o seu e-mail foi confirmado."
 };
-const loteMod = () => lote || (lote = import("./lote.js?v=19"));
+const loteMod = () => lote || (lote = import("./lote.js?v=20"));
 function renderMusicAdmin() {
   const fsSongs = S.songs.filter(x => x.storage), stat = S.songs.filter(x => !x.storage);
   const row = (x, edit) => `<div class="mu-row"><div><b>${esc(x.titulo)}</b><small>${[x.cifra || x.cifraJson ? "cifra" : "", x.partituras?.length ? x.partituras.length + (x.partituras.length > 1 ? " partituras" : " partitura") : "", x.youtube ? "YouTube" : x.audio ? "áudio" : ""].filter(Boolean).join(" · ") || "sem arquivos"}</small></div>${edit ? `<button type="button" data-ed="${esc(x.id)}">Editar</button><button type="button" data-rm="${esc(x.id)}">Remover</button>` : ""}</div>`;

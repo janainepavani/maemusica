@@ -114,7 +114,7 @@ function readHeader(text) {
   const m = p.match(/nivel\s*:\s*([^/]+?)\s*\/\s*tonalidade\s*:\s*([a-g][#b]?m?)\s*(?:\(\s*([\d/]+)\s*\))?\s*(?:t\s*:\s*(\d+))?/);
   if (!m) return null;
   const nivelP = m[1].trim();
-  const nivel = nivelP.startsWith("inter") ? "intermediário" : nivelP.startsWith("simpl") ? "simplificado" : nivelP.startsWith("avan") ? "avançado" : nivelP.startsWith("inic") ? "iniciante" : nivelP;
+  const nivel = nivelP.startsWith("inter") ? "intermediário" : nivelP.startsWith("simpl") ? "simplificado" : nivelP.startsWith("avan") ? "avançado" : nivelP.startsWith("inic") ? "iniciante" : nivelP.startsWith("fac") ? "fácil" : nivelP.startsWith("orig") ? "original" : nivelP.startsWith("bas") ? "básico" : nivelP;
   const tom = m[2].charAt(0).toUpperCase() + m[2].slice(1);
   return { nivel, tom, compasso: m[3] || "", bpm: m[4] ? +m[4] : "" };
 }

@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=19">
+<link rel="stylesheet" href="styles.css?v=20">
 </head>
 <body>
 <div class="app" id="app">
@@ -121,7 +121,7 @@
     <div id="pane-cifra">
       <div class="controls">
         <div class="ctrl-row">
-          <div class="lvl"><button data-lvl="intermediário" class="on" type="button">Intermediário</button><button data-lvl="simplificado" type="button">Simplificado</button></div>
+          <div class="lvl" id="lvl"></div>
         </div>
         <div class="ctrl-row">
           <div class="stepper"><button id="k-down" type="button" aria-label="Descer meio tom">−</button><div class="v"><small>Tom</small><span id="k-val">D</span></div><button id="k-up" type="button" aria-label="Subir meio tom">+</button></div>
@@ -249,6 +249,6 @@
     <div class="viewer-pages" id="v-pages"></div>
   </div>
 </div>
-<script type="module" src="app.js?v=19"></script>
+<script type="module" src="app.js?v=20"></script>
 </body>
 </html>
