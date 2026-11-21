@@ -13,13 +13,16 @@ import {
 import {
   getStorage, ref as sref, uploadBytes, getDownloadURL, listAll, deleteObject
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=14";
+import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=15";
 
 const fb = initializeApp(firebaseConfig);
 const auth = getAuth(fb);
 auth.languageCode = "pt";
 const db = getFirestore(fb);
 const storage = getStorage(fb);
+// sem isso o Firebase fica tentando por até 10 minutos sem avisar nada
+storage.maxUploadRetryTime = 45000; storage.maxOperationRetryTime = 45000;
+const withTimeout = (p, ms, code) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error("tempo esgotado"), { code })), ms))]);
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -638,9 +641,10 @@ const STORAGE_ERR = {
   "storage/project-not-found": "o armazenamento ainda não foi criado no Firebase (Storage > Começar).",
   "storage/unknown": "o armazenamento não respondeu. Confira se o Storage foi criado e se o plano Blaze está ativo.",
   "storage/retry-limit-exceeded": "a internet caiu no meio do envio. Tente de novo.",
+  "storage/timeout": "o armazenamento não respondeu em 90 segundos. Confira no Firebase se o Storage foi criado (Storage > Começar) e se o plano Blaze está ativo.",
   "permission-denied": "o banco de dados recusou. Confira se as regras novas do Firestore foram publicadas e se o seu e-mail foi confirmado."
 };
-const loteMod = () => lote || (lote = import("./lote.js?v=14"));
+const loteMod = () => lote || (lote = import("./lote.js?v=15"));
 function renderMusicAdmin() {
   const fsSongs = S.songs.filter(x => x.storage), stat = S.songs.filter(x => !x.storage);
   const row = (x, edit) => `<div class="mu-row"><div><b>${esc(x.titulo)}</b><small>${[x.cifra || x.cifraJson ? "cifra" : "", x.partituras?.length ? x.partituras.length + (x.partituras.length > 1 ? " partituras" : " partitura") : "", x.youtube ? "YouTube" : x.audio ? "áudio" : ""].filter(Boolean).join(" · ") || "sem arquivos"}</small></div>${edit ? `<button type="button" data-ed="${esc(x.id)}">Editar</button><button type="button" data-rm="${esc(x.id)}">Remover</button>` : ""}</div>`;
@@ -727,7 +731,7 @@ async function sendAll() {
       await L.sendSong(g, {
         log,
         progress: f => { if (bar) bar.firstElementChild.style.width = Math.round(f * 100) + "%"; setTotal(i, f); },
-        upload: (path, blob, type) => uploadBytes(sref(storage, path), blob, { contentType: type }),
+        upload: (path, blob, type) => withTimeout(uploadBytes(sref(storage, path), blob, { contentType: type }), 90000, "storage/timeout"),
         save: (id, data) => setDoc(doc(db, "songs", id), { ...data, updatedAt: serverTimestamp() }, { merge: true })
       });
       const e = st(); e.className = "mu-status ok"; e.textContent = g.semTom ? "Enviada. A cifra está fora do modelo e foi como imagem, sem troca de tom." : "Enviada."; g.done = true; ok++;
