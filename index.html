@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=25">
+<link rel="stylesheet" href="styles.css?v=27">
 </head>
 <body>
 <div class="app" id="app">
@@ -245,10 +245,11 @@
   </nav>
 
   <div class="viewer hidden" id="viewer">
-    <div class="viewer-bar"><button id="v-close" type="button">‹ Voltar</button><div class="t" id="v-title"></div><button id="z-out" type="button">−</button><button id="z-in" type="button">+</button></div>
+    <div class="viewer-bar"><button id="v-close" type="button">‹ Voltar</button><div class="t" id="v-title"></div><button id="z-out" type="button" aria-label="Diminuir">−</button><button id="z-in" type="button" aria-label="Aumentar">+</button><button id="v-full" type="button">Tela cheia</button></div>
+    <button class="v-exit hidden" id="v-exit" type="button">Sair da tela cheia</button>
     <div class="viewer-pages" id="v-pages"></div>
   </div>
 </div>
-<script type="module" src="app.js?v=25"></script>
+<script type="module" src="app.js?v=27"></script>
 </body>
 </html>

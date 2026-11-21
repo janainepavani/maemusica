@@ -4,7 +4,7 @@
 // - cifra (PDF com "cifra" no nome): vira texto com acordes, para trocar o tom;
 // - grade / full score, partes / banda e outros PDFs: cada página vira imagem;
 // - áudio (mp3, m4a, wav): vai como está, para as músicas que não têm YouTube.
-import { parseCifraPdf } from "./cifra.js?v=25";
+import { parseCifraPdf } from "./cifra.js?v=27";
 
 const AUDIO_EXT = ["mp3", "m4a", "aac", "wav", "ogg"];
 const GENERIC = new Set(["partituras", "partitura", "cifras", "cifra", "pdf", "pdfs", "audios", "audio", "musicas", "repertorio", "arquivos", "amo", "maes que oram"]);
@@ -134,7 +134,9 @@ export async function sendSong(g, api) {
   }
   const parts = g.files.filter(x => ["grade", "banda", "harmonia", "harmsimp", "partitura"].includes(x.type));
   if (cifraComoImagem) parts.unshift({ file: cifraComoImagem.file, type: "cifraimg" });
-  if (parts.length) {
+  const remover = g.remover || new Set();
+  if (parts.length || remover.size) {
+    const stamp = Date.now().toString(36);
     const order = { cifraimg: -1, grade: 0, banda: 1, harmonia: 2, harmsimp: 3, partitura: 4 };
     parts.sort((a, b) => order[a.type] - order[b.type]);
     data.partituras = [];
@@ -145,19 +147,22 @@ export async function sendSong(g, api) {
       const blobs = await renderPages(pdf, (p, n) => { api.log(`${rotulo}: preparando página ${p} de ${n}`); if (!isCifraImg) prog(0.4 * p / n); });
       const paginas = [];
       for (const [j, b] of blobs.entries()) {
-        const path = `songs/${id}/${pf.type}-${i + 1}-${j + 1}.png`;
+        const path = `songs/${id}/${pf.type}-${i + 1}-${j + 1}-${stamp}.png`;
         api.log(`${rotulo}: enviando página ${j + 1} de ${blobs.length}`);
         await api.upload(path, b, "image/png"); paginas.push(path);
         if (!isCifraImg) prog(0.4 + 0.6 * (j + 1) / blobs.length);
       }
       if (!isCifraImg) { doneU += 1; prog(0); }
-      const [nome, desc] = DESC[pf.type] || [prettyTitle(songKey(pf.file.name)) || "Partitura", "Partitura"];
+      const [nome, desc] = pf.nome ? [pf.nome, (DESC[pf.type] || [])[1] || "Partitura"] : (DESC[pf.type] || [prettyTitle(songKey(pf.file.name)) || "Partitura", "Partitura"]);
       data.partituras.push({ nome, desc, paginas });
     }
     // as partituras que já estavam no aplicativo e não foram trocadas agora continuam
     const novos = new Set(data.partituras.map(p => p.nome));
     if (novos.has("Cifra em PDF")) novos.add("Cifra");
-    data.partituras.push(...(g.antigas || []).filter(p => !novos.has(p.nome)));
+    data.partituras.push(...(g.antigas || []).filter(p => !novos.has(p.nome) && !remover.has(p.nome)));
+    // apaga do armazenamento as páginas que foram trocadas ou removidas
+    const fora = (g.antigas || []).filter(p => novos.has(p.nome) || remover.has(p.nome)).flatMap(p => p.paginas);
+    if (api.remove) await Promise.allSettled(fora.map(api.remove));
     const ordem = ["Cifra em PDF", "Cifra", "Grade completa", "Partes da banda", "Harmonia vocal", "Harmonia vocal simplificada"];
     data.partituras.sort((a, b) => (ordem.indexOf(a.nome) + 1 || 9) - (ordem.indexOf(b.nome) + 1 || 9));
   }

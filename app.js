@@ -13,7 +13,7 @@ import {
 import {
   getStorage, ref as sref, uploadBytes, getDownloadURL, listAll, deleteObject
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=25";
+import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=27";
 
 const fb = initializeApp(firebaseConfig);
 const auth = getAuth(fb);
@@ -512,10 +512,29 @@ function openViewer(p) {
   const s = cur; $$("#v-pages img").forEach(img => fileUrl(s, img.dataset.src).then(u => img.src = u).catch(() => {}));
   applyZoom(); $("#viewer").classList.remove("hidden"); $("#float-cta").classList.add("hidden");
 }
-function applyZoom() { $$("#v-pages img").forEach(i => i.style.width = (zoom * 100) + "%"); }
+function applyZoom() { $$("#v-pages img").forEach(i => { i.style.width = (zoom * 100) + "%"; i.style.maxWidth = zoom === 1 ? "900px" : "none"; }); }
+// tela cheia: usa a do navegador quando existe; no iPhone, que não tem, esconde a barra
+function setFull(on) {
+  const v = $("#viewer");
+  v.classList.toggle("full", on);
+  $("#v-exit").classList.toggle("hidden", !on);
+}
+$("#v-full").onclick = async () => {
+  const v = $("#viewer");
+  const req = v.requestFullscreen || v.webkitRequestFullscreen;
+  if (req) { try { await req.call(v); } catch (e) {} }
+  setFull(true);
+};
+$("#v-exit").onclick = async () => {
+  const exit = document.exitFullscreen || document.webkitExitFullscreen;
+  if ((document.fullscreenElement || document.webkitFullscreenElement) && exit) { try { await exit.call(document); } catch (e) {} }
+  setFull(false);
+};
+document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement) setFull(false); });
+document.addEventListener("webkitfullscreenchange", () => { if (!document.webkitFullscreenElement) setFull(false); });
 $("#z-in").onclick = () => { zoom = Math.min(3, zoom + .25); applyZoom(); };
 $("#z-out").onclick = () => { zoom = Math.max(1, zoom - .25); applyZoom(); };
-$("#v-close").onclick = () => { $("#viewer").classList.add("hidden"); if (cur?.curso) $("#float-cta").classList.remove("hidden"); };
+$("#v-close").onclick = () => { setFull(false); $("#viewer").classList.add("hidden"); if (cur?.curso) $("#float-cta").classList.remove("hidden"); };
 
 /* ---------- painel da Janaine ---------- */
 let ADM = [];
@@ -637,6 +656,7 @@ if ("serviceWorker" in navigator) window.addEventListener("load", () => navigato
 
 /* ---------- músicas pelo painel ---------- */
 let lote = null, REVIEW = [], sending = false;
+const tipoDoNome = n => ({ "Cifra em PDF": "cifra", "Cifra": "cifra", "Grade completa": "grade", "Partes da banda": "banda", "Harmonia vocal": "grade", "Harmonia vocal simplificada": "harmsimp" })[n] || "partitura";
 const STORAGE_ERR = {
   "storage/unauthorized": "o armazenamento recusou. Confira se as regras do Storage foram publicadas e se o seu e-mail foi confirmado.",
   "storage/bucket-not-found": "o armazenamento ainda não foi criado no Firebase (Storage > Começar).",
@@ -646,7 +666,7 @@ const STORAGE_ERR = {
   "storage/timeout": "o armazenamento não respondeu em 90 segundos. Confira no Firebase se o Storage foi criado (Storage > Começar) e se o plano Blaze está ativo.",
   "permission-denied": "o banco de dados recusou. Confira se as regras novas do Firestore foram publicadas e se o seu e-mail foi confirmado."
 };
-const loteMod = () => lote || (lote = import("./lote.js?v=25"));
+const loteMod = () => lote || (lote = import("./lote.js?v=27"));
 function renderMusicAdmin() {
   const fsSongs = S.songs.filter(x => x.storage), stat = S.songs.filter(x => !x.storage);
   const row = (x, edit) => `<div class="mu-row"><div><b>${esc(x.titulo)}</b><small>${[x.cifra || x.cifraJson ? "cifra" : "", x.partituras?.length ? x.partituras.length + (x.partituras.length > 1 ? " partituras" : " partitura") : "", x.youtube ? "YouTube" : x.audio ? "áudio" : ""].filter(Boolean).join(" · ") || "sem arquivos"}</small></div>${edit ? `<button type="button" data-ed="${esc(x.id)}">Editar</button><button type="button" data-rm="${esc(x.id)}">Remover</button>` : ""}</div>`;
@@ -689,6 +709,21 @@ async function renderReview() {
       <div class="field"><label>Autor</label><input type="text" data-k="autor" value="${esc(g.autor)}"></div>
       <div class="field"><label>Link do YouTube (se tiver)</label><input type="url" data-k="youtube" value="${esc(g.youtube)}" placeholder="https://youtu.be/..."></div>
       <label class="mu-chk"><input type="checkbox" data-k="curso" ${g.curso ? "checked" : ""}> Aulas completas disponíveis (Repertório)</label>
+      ${g.existe ? (() => {
+        const ex = S.songs.find(x => x.id === g.id) || {};
+        const itens = [];
+        if (ex.cifraJson) itens.push({ nome: "Cifra com troca de tom", tipo: "cifra", fixo: true });
+        (g.antigas || []).forEach(p => itens.push({ nome: p.nome, tipo: tipoDoNome(p.nome) }));
+        if (ex.audio) itens.push({ nome: "Áudio", tipo: "audio", fixo: true });
+        if (!itens.length) return "";
+        return `<div class="mu-old-h">Já no aplicativo</div>` + itens.map(it => {
+          const off = g.remover?.has(it.nome);
+          return `<div class="mu-old${off ? " off" : ""}"><span>${esc(it.nome)}${off ? " · será removida" : ""}</span>
+            <label class="mu-btn">Trocar<input type="file" hidden accept="${it.tipo === "audio" ? ".mp3,.m4a,.wav,.aac,.ogg" : ".pdf"}" data-troca="${i}" data-tipo="${it.tipo}" data-nome="${it.tipo === "cifra" || it.tipo === "audio" ? "" : esc(it.nome)}"></label>
+            ${it.fixo ? "" : `<button type="button" class="mu-btn" data-rem="${i}" data-nome="${esc(it.nome)}">${off ? "Manter" : "Remover"}</button>`}</div>`;
+        }).join("");
+      })() : ""}
+      ${g.files.length ? `<div class="mu-old-h">Para enviar</div>` : ""}
       ${g.files.map((f, j) => `<div class="mu-file"><span>${esc(f.file.name)}</span><select data-f="${j}">${Object.entries(L.TYPE_LABEL).map(([k, v]) => `<option value="${k}" ${k === f.type ? "selected" : ""}>${v}</option>`).join("")}</select></div>`).join("")}
       ${(() => {
         const outras = REVIEW.map((o, j) => j === i ? "" : `<option value="r${j}">${esc(o.titulo)}</option>`).join("");
@@ -702,6 +737,18 @@ async function renderReview() {
     const g = REVIEW[+card.dataset.g];
     card.querySelectorAll("[data-k]").forEach(inp => inp.oninput = inp.onchange = () => { g[inp.dataset.k] = inp.type === "checkbox" ? inp.checked : inp.value; });
     card.querySelectorAll("[data-f]").forEach(sel => sel.onchange = () => { g.files[+sel.dataset.f].type = sel.value; });
+  });
+  $$("#mu-review [data-troca]").forEach(inp => inp.onchange = () => {
+    const g = REVIEW[+inp.dataset.troca], f = inp.files[0]; if (!f) return;
+    const nome = inp.dataset.nome || undefined;
+    g.files = g.files.filter(x => nome ? x.nome !== nome : x.type !== inp.dataset.tipo);
+    g.files.push({ file: f, type: inp.dataset.tipo, nome });
+    renderReview();
+  });
+  $$("#mu-review [data-rem]").forEach(b => b.onclick = () => {
+    const g = REVIEW[+b.dataset.rem]; g.remover = g.remover || new Set();
+    const n = b.dataset.nome; g.remover.has(n) ? g.remover.delete(n) : g.remover.add(n);
+    renderReview();
   });
   $$("#mu-review [data-join]").forEach(sel => sel.onchange = () => {
     if (sel.value === "") return;
@@ -760,6 +807,7 @@ async function sendAll() {
         log,
         progress: f => { if (bar) bar.firstElementChild.style.width = Math.round(f * 100) + "%"; setTotal(i, f); },
         upload: (path, blob, type) => withTimeout(uploadBytes(sref(storage, path), blob, { contentType: type }), 90000, "storage/timeout"),
+        remove: path => deleteObject(sref(storage, path)),
         save: (id, data) => setDoc(doc(db, "songs", id), { ...data, updatedAt: serverTimestamp() }, { merge: true })
       });
       const e = st(); e.className = "mu-status ok"; e.textContent = g.semTom ? "Enviada. A cifra está fora do modelo e foi como imagem, sem troca de tom." : "Enviada."; g.done = true; ok++;
