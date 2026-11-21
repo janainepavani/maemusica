@@ -4,7 +4,7 @@
 // - cifra (PDF com "cifra" no nome): vira texto com acordes, para trocar o tom;
 // - grade / full score, partes / banda e outros PDFs: cada página vira imagem;
 // - áudio (mp3, m4a, wav): vai como está, para as músicas que não têm YouTube.
-import { parseCifraPdf } from "./cifra.js?v=24";
+import { parseCifraPdf } from "./cifra.js?v=25";
 
 const AUDIO_EXT = ["mp3", "m4a", "aac", "wav", "ogg"];
 const GENERIC = new Set(["partituras", "partitura", "cifras", "cifra", "pdf", "pdfs", "audios", "audio", "musicas", "repertorio", "arquivos", "amo", "maes que oram"]);
@@ -18,7 +18,7 @@ function typeOf(name) {
   if (AUDIO_EXT.includes(ext)) return "audio";
   if (ext !== "pdf") return "ignorar";
   if (/cifra/.test(n)) return "cifra";
-  if (/harmonia|vozes|satb/.test(n)) return /simplific/.test(n) ? "harmsimp" : "harmonia";
+  if (/harmonia|vozes|satb/.test(n)) return /simplific/.test(n) ? "harmsimp" : "grade"; // a harmonia vocal completa é a grade principal
   if (/parte|banda/.test(n)) return "banda";
   if (/grade|full ?score|score completo|partitura completa/.test(n)) return "grade";
   return "partitura";
