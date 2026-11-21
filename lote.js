@@ -27,7 +27,7 @@ function songKey(name) {
   let n = norm(name).replace(/\.[a-z0-9]+$/, "");
   n = n.replace(/^\s*\d+\s*[._-]\s*/, ""); // "02. Repertório..."
   n = n.replace(/[^a-z0-9]+/g, " ");
-  n = n.replace(/\b(cifra|cifras|grade|full|score|partes?|banda|amo|jp|v\d+|final|versao|partitura|completa|audio|guia|mp3|repertorio)\b/g, " ");
+  n = n.replace(/\b(cifra|cifras|grade|full|score|partes?|banda|amo|jp|v\d+|final|versao|partitura|completa|audio|guia|mp3|repertorio|novo|nova|atualizado|atualizada|revisado|revisada)\b/g, " ");
   return n.replace(/[^a-z0-9]+/g, " ").trim();
 }
 function prettyTitle(key) {
@@ -41,6 +41,16 @@ function folderOf(f) {
   return segs.slice(1).reverse().find(p => !GENERIC.has(norm(p).trim())) || "";
 }
 
+// junta fichas que ficaram com o mesmo nome de música (por exemplo, depois de ler o título da cifra)
+export function mergeSame(groups) {
+  const out = [];
+  for (const g of groups) {
+    const t = out.find(x => slug(x.titulo) === slug(g.titulo));
+    if (t) { t.files.push(...g.files); t.autor = t.autor || g.autor; t.youtube = t.youtube || g.youtube; t.existe = t.existe || g.existe; if (g.existe) t.id = g.id; }
+    else out.push(g);
+  }
+  return out;
+}
 export function groupFiles(files, existing) {
   const groups = new Map();
   for (const f of files) {
@@ -55,7 +65,7 @@ export function groupFiles(files, existing) {
     }
     groups.get(id).files.push({ file: f, type });
   }
-  return [...groups.values()];
+  return mergeSame([...groups.values()]);
 }
 
 let pdfjsReady = null;
@@ -92,6 +102,7 @@ export async function peekCifra(file) {
 }
 
 const DESC = {
+  cifraimg: ["Cifra", "Cifra em PDF, sem troca de tom"],
   grade: ["Grade completa", "Voz, cifra e acompanhamento"],
   banda: ["Partes da banda", "Cifra para a banda"]
 };
@@ -101,21 +112,27 @@ export async function sendSong(g, api) {
   const id = g.existe ? g.id : (slug(g.titulo) || g.id);
   const data = { titulo: g.titulo.trim(), autor: g.autor.trim(), youtube: g.youtube.trim(), curso: !!g.curso };
   const cif = g.files.find(x => x.type === "cifra");
+  let cifraComoImagem = null;
   if (cif) {
     api.log("lendo a cifra");
     const r = await parseCifraPdf(await openPdf(cif.file));
-    if (!r.versoes.length) throw new Error("Não encontrei \"Nível: ... / Tonalidade: ...\" na cifra " + cif.file.name);
-    data.cifraJson = JSON.stringify(r.versoes);
-    data.tons = [...new Set(r.versoes.map(v => v.tom))];
+    if (r.versoes.length) {
+      data.cifraJson = JSON.stringify(r.versoes);
+      data.tons = [...new Set(r.versoes.map(v => v.tom))];
+    } else {
+      // fora do modelo: vai como imagem, para ler; sem troca de tom
+      cifraComoImagem = cif; g.semTom = true;
+    }
   }
   const parts = g.files.filter(x => ["grade", "banda", "partitura"].includes(x.type));
+  if (cifraComoImagem) parts.unshift({ file: cifraComoImagem.file, type: "cifraimg" });
   if (parts.length) {
-    const order = { grade: 0, banda: 1, partitura: 2 };
+    const order = { cifraimg: -1, grade: 0, banda: 1, partitura: 2 };
     parts.sort((a, b) => order[a.type] - order[b.type]);
     data.partituras = [];
     for (const [i, pf] of parts.entries()) {
       const pdf = await openPdf(pf.file);
-      const blobs = await renderPages(pdf, (p, n) => api.log(`${TYPE_LABEL[pf.type].toLowerCase()}: página ${p} de ${n}`));
+      const blobs = await renderPages(pdf, (p, n) => api.log(`${(TYPE_LABEL[pf.type] || "cifra").toLowerCase()}: página ${p} de ${n}`));
       const paginas = [];
       for (const [j, b] of blobs.entries()) {
         const path = `songs/${id}/${pf.type}-${i + 1}-${j + 1}.png`;

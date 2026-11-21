@@ -348,7 +348,7 @@ async function openSong(id, push = true) {
   $("#cifra").innerHTML = '<span class="ly" style="color:var(--muted)">Carregando a cifra...</span>';
   try {
     versions = await getCifra(cur);
-    if (!versions?.length) { $("#cifra").innerHTML = '<span class="ly" style="color:var(--muted)">Esta música ainda não tem cifra. Veja as partituras.</span>'; $("#s-meta").innerHTML = ""; $(".controls").classList.add("hidden"); return; }
+    if (!versions?.length) { $("#cifra").innerHTML = '<span class="ly" style="color:var(--muted)">Esta música ainda não tem cifra com troca de tom. A cifra está na aba Partituras.</span>'; $("#s-meta").innerHTML = ""; $(".controls").classList.add("hidden"); return; }
     $(".controls").classList.remove("hidden");
     const lv = [...new Set(versions.map(v => v.nivel))];
     if (!lv.includes(lvl)) lvl = lv[0];
@@ -648,7 +648,7 @@ async function pickFiles(list) {
   REVIEW = L.groupFiles([...list], S.songs);
   if (!REVIEW.length) return toast("Não encontrei PDF nem áudio nesses arquivos.");
   renderReview();
-  for (const g of REVIEW) {
+  for (const g of REVIEW.slice()) {
     const c = g.files.find(x => x.type === "cifra");
     if (c && !g.existe) {
       const r = await L.peekCifra(c.file);
@@ -656,6 +656,9 @@ async function pickFiles(list) {
       if (r?.autor && !g.autor) g.autor = r.autor;
       if (r && !r.versoes) g.aviso = "Não reconheci os níveis e tons nesta cifra.";
       const card = $(`#mu-review .mu-card[data-g="${REVIEW.indexOf(g)}"]`);
+      const before = REVIEW.length;
+      REVIEW = L.mergeSame(REVIEW);
+      if (REVIEW.length !== before && !sending) { renderReview(); continue; }
       if (card && !sending) {
         card.querySelector('[data-k="titulo"]').value = g.titulo;
         card.querySelector('[data-k="autor"]').value = g.autor;
@@ -708,7 +711,7 @@ async function sendAll() {
         upload: (path, blob, type) => uploadBytes(sref(storage, path), blob, { contentType: type }),
         save: (id, data) => setDoc(doc(db, "songs", id), { ...data, updatedAt: serverTimestamp() }, { merge: true })
       });
-      const e = st(); e.className = "mu-status ok"; e.textContent = "Enviada."; g.done = true; ok++;
+      const e = st(); e.className = "mu-status ok"; e.textContent = g.semTom ? "Enviada. A cifra está fora do modelo e foi como imagem, sem troca de tom." : "Enviada."; g.done = true; ok++;
     } catch (err) {
       console.error(err);
       const msg = STORAGE_ERR[err?.code] || err?.message || "tente de novo";
@@ -721,7 +724,8 @@ async function sendAll() {
   urlCache.clear(); Object.keys(cifraCache).forEach(k => delete cifraCache[k]);
   await loadSongs(); renderList(); renderMusicAdmin();
   REVIEW = REVIEW.filter(g => !g.done);
-  if (ok) toast(ok + (ok === 1 ? " música enviada." : " músicas enviadas."));
+  const semTom = REVIEW.filter(g => g.done && g.semTom).map(g => g.titulo);
+  if (ok) toast(ok + (ok === 1 ? " música enviada." : " músicas enviadas.") + (semTom.length ? " A cifra de " + semTom.join(", ") + " foi como imagem, sem troca de tom." : ""));
   if (erro && !ok) toast("Não enviou: " + erro);
   if (REVIEW.length) {
     renderReview();
