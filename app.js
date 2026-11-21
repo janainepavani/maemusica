@@ -352,7 +352,7 @@ async function openSong(id, push = true) {
     $(".controls").classList.remove("hidden");
     const lv = [...new Set(versions.map(v => v.nivel))];
     if (!lv.includes(lvl)) lvl = lv[0];
-    $$(".lvl button").forEach(b => { b.classList.toggle("on", b.dataset.lvl === lvl); b.classList.toggle("hidden", !lv.includes(b.dataset.lvl)); });
+    $$("#pane-cifra .lvl button").forEach(b => { b.classList.toggle("on", b.dataset.lvl === lvl); b.classList.toggle("hidden", !lv.includes(b.dataset.lvl)); });
     renderCifra();
   } catch (e) { $("#cifra").innerHTML = '<span class="ly">Não consegui abrir a cifra. Verifique a internet.</span>'; }
 }
@@ -459,7 +459,7 @@ function drawCifra() {
   el.innerHTML = out.join("");
 }
 window.addEventListener("resize", () => { if (!$("#v-song").classList.contains("hidden")) drawCifra(); });
-$$(".lvl button").forEach(b => b.onclick = () => { lvl = b.dataset.lvl; $$(".lvl button").forEach(x => x.classList.toggle("on", x === b)); renderCifra(); });
+$$("#pane-cifra .lvl button").forEach(b => b.onclick = () => { lvl = b.dataset.lvl; $$("#pane-cifra .lvl button").forEach(x => x.classList.toggle("on", x === b)); renderCifra(); });
 function shiftKey(d) {
   const minor = key.endsWith("m"); const r = keyRoot(key);
   const i = KEYNAMES.indexOf(r) >= 0 ? KEYNAMES.indexOf(r) : pc(r);
