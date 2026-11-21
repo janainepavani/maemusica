@@ -13,7 +13,7 @@ import {
 import {
   getStorage, ref as sref, uploadBytes, getDownloadURL, listAll, deleteObject
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=27";
+import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js?v=28";
 
 const fb = initializeApp(firebaseConfig);
 const auth = getAuth(fb);
@@ -250,6 +250,13 @@ function bannerHTML(c, b) {
     <div class="k">${esc(c.curto)}</div><h3>${esc(b.h)}</h3><p>${esc(b.p)}</p><span class="cta">${esc(c.botao || "Quero me inscrever")} ›</span></div></a>`;
 }
 let carT = null;
+// celular: leva à página da Nutror na loja (instala ou abre o aplicativo)
+function appNutror() {
+  const ua = navigator.userAgent || "";
+  if (/iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return "https://apps.apple.com/br/app/nutror/id1485462403";
+  if (/Android/i.test(ua)) return "https://play.google.com/store/apps/details?id=br.com.nutror.app";
+  return "";
+}
 function renderPromos() {
   const L = S.cfg.links;
   const comBanner = S.cursos.filter(c => c.banners.length);
@@ -265,7 +272,9 @@ function renderPromos() {
   $("#list-promo").innerHTML = bannerHTML(outro, outroB);
   // aba Aprofunde seu estudo
   $("#study-top").innerHTML = isAluna()
-    ? `<a class="promo aluna" href="${L.nutror}" target="_blank" rel="noopener" style="margin-bottom:14px"><div class="in"><div class="k">Área da aluna</div><h3>Continue suas aulas</h3><p>Entre direto nos seus cursos na Nutror, com o seu e-mail e senha.</p><span class="cta">Entrar nas minhas aulas ›</span></div></a>`
+    ? `<div class="promo aluna" style="margin-bottom:14px"><div class="in"><div class="k">Área da aluna</div><h3>Continue suas aulas</h3><p>Entre direto nos seus cursos na Nutror, com o seu e-mail e senha.</p>
+        <div class="aluna-b"><a class="cta" href="${L.nutror}" target="_blank" rel="noopener">Entrar pelo navegador ›</a>${appNutror() ? `<a class="cta cta-line" href="${appNutror()}" target="_blank" rel="noopener">Usar o aplicativo da Nutror</a>` : ""}</div>
+        ${appNutror() ? `<p class="aluna-n">No aplicativo, toque em Abrir se ele já estiver instalado.</p>` : ""}</div></div>`
     : `<a class="nutror" href="${L.nutror}" target="_blank" rel="noopener" style="margin:0 0 14px"><div><b>Já é aluna?</b><br><span>Entre nas suas aulas na Nutror</span></div><div style="font-size:22px;color:var(--gold)">›</div></a>`;
   const MAES = "https://www.janainepavani.com/maes";
   const modRow = m => `<div class="mod"><b>${esc(m.nome)}</b><div class="mod-b">
@@ -666,7 +675,7 @@ const STORAGE_ERR = {
   "storage/timeout": "o armazenamento não respondeu em 90 segundos. Confira no Firebase se o Storage foi criado (Storage > Começar) e se o plano Blaze está ativo.",
   "permission-denied": "o banco de dados recusou. Confira se as regras novas do Firestore foram publicadas e se o seu e-mail foi confirmado."
 };
-const loteMod = () => lote || (lote = import("./lote.js?v=27"));
+const loteMod = () => lote || (lote = import("./lote.js?v=28"));
 function renderMusicAdmin() {
   const fsSongs = S.songs.filter(x => x.storage), stat = S.songs.filter(x => !x.storage);
   const row = (x, edit) => `<div class="mu-row"><div><b>${esc(x.titulo)}</b><small>${[x.cifra || x.cifraJson ? "cifra" : "", x.partituras?.length ? x.partituras.length + (x.partituras.length > 1 ? " partituras" : " partitura") : "", x.youtube ? "YouTube" : x.audio ? "áudio" : ""].filter(Boolean).join(" · ") || "sem arquivos"}</small></div>${edit ? `<button type="button" data-ed="${esc(x.id)}">Editar</button><button type="button" data-rm="${esc(x.id)}">Remover</button>` : ""}</div>`;

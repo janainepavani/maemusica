@@ -298,3 +298,8 @@ input,select{font:inherit}
 .viewer.full .viewer-pages{padding:0;background:#fff}
 .viewer.full .viewer-pages img{box-shadow:none;margin-bottom:0}
 .v-exit{position:fixed;top:calc(10px + env(safe-area-inset-top));right:10px;z-index:60;padding:9px 14px;border-radius:20px;background:rgba(1,28,60,.85);color:#fff;font-size:14px}
+
+.aluna-b{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.aluna-b a.cta{margin-top:0;text-decoration:none}
+.promo.aluna .cta-line{background:transparent;color:var(--navy-deep);border:1.5px solid var(--navy-deep)}
+.aluna-n{font-size:13px!important;margin-top:8px!important;opacity:.8}
