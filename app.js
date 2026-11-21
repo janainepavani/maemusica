@@ -625,7 +625,15 @@ $("#adm-csv").onclick = () => {
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 
 /* ---------- músicas pelo painel ---------- */
-let lote = null, REVIEW = [];
+let lote = null, REVIEW = [], sending = false;
+const STORAGE_ERR = {
+  "storage/unauthorized": "o armazenamento recusou. Confira se as regras do Storage foram publicadas e se o seu e-mail foi confirmado.",
+  "storage/bucket-not-found": "o armazenamento ainda não foi criado no Firebase (Storage > Começar).",
+  "storage/project-not-found": "o armazenamento ainda não foi criado no Firebase (Storage > Começar).",
+  "storage/unknown": "o armazenamento não respondeu. Confira se o Storage foi criado e se o plano Blaze está ativo.",
+  "storage/retry-limit-exceeded": "a internet caiu no meio do envio. Tente de novo.",
+  "permission-denied": "o banco de dados recusou. Confira se as regras novas do Firestore foram publicadas e se o seu e-mail foi confirmado."
+};
 const loteMod = () => lote || (lote = import("./lote.js"));
 function renderMusicAdmin() {
   const fsSongs = S.songs.filter(x => x.storage), stat = S.songs.filter(x => !x.storage);
@@ -647,7 +655,12 @@ async function pickFiles(list) {
       if (r?.titulo) g.titulo = r.titulo.replace(/\s+/g, " ").trim();
       if (r?.autor && !g.autor) g.autor = r.autor;
       if (r && !r.versoes) g.aviso = "Não reconheci os níveis e tons nesta cifra.";
-      renderReview();
+      const card = $(`#mu-review .mu-card[data-g="${REVIEW.indexOf(g)}"]`);
+      if (card && !sending) {
+        card.querySelector('[data-k="titulo"]').value = g.titulo;
+        card.querySelector('[data-k="autor"]').value = g.autor;
+        if (g.aviso) card.querySelector(".mu-status").textContent = g.aviso;
+      }
     }
   }
 }
@@ -662,7 +675,7 @@ async function renderReview() {
       <div class="field"><label>Link do YouTube (se tiver)</label><input type="url" data-k="youtube" value="${esc(g.youtube)}" placeholder="https://youtu.be/..."></div>
       <label class="mu-chk"><input type="checkbox" data-k="curso" ${g.curso ? "checked" : ""}> Tem aula no curso</label>
       ${g.files.map((f, j) => `<div class="mu-file"><span>${esc(f.file.name)}</span><select data-f="${j}">${Object.entries(L.TYPE_LABEL).map(([k, v]) => `<option value="${k}" ${k === f.type ? "selected" : ""}>${v}</option>`).join("")}</select></div>`).join("")}
-      <div class="mu-status ${g.st || ""}">${esc(g.aviso || g.msg || "")}</div></div>`).join("")
+      <div class="mu-status">${esc(g.aviso || "")}</div></div>`).join("")
     + `<div class="mu-actions"><button class="mu-cancel" type="button" id="mu-cancel">Cancelar</button><button class="mu-send" type="button" id="mu-send">Enviar ${REVIEW.length} ${REVIEW.length > 1 ? "músicas" : "música"}</button></div>`;
   $$("#mu-review .mu-card").forEach(card => {
     const g = REVIEW[+card.dataset.g];
@@ -673,28 +686,47 @@ async function renderReview() {
   $("#mu-send").onclick = sendAll;
 }
 async function sendAll() {
+  if (sending) return;
+  await auth.currentUser.reload().catch(() => {});
+  if (!auth.currentUser.emailVerified) {
+    toast("Antes de enviar, confirme o seu e-mail: abra a mensagem do Firebase na caixa de entrada e toque no link.");
+    return;
+  }
+  await auth.currentUser.getIdToken(true).catch(() => {});
   const L = await loteMod();
-  $("#mu-send").disabled = true; $("#mu-cancel").disabled = true;
-  let ok = 0;
+  sending = true;
+  $("#mu-send").disabled = true; $("#mu-cancel").disabled = true; $("#mu-send").textContent = "Enviando...";
+  let ok = 0, erro = "";
   for (const [i, g] of REVIEW.entries()) {
-    const st = $(`#mu-review .mu-card[data-g="${i}"] .mu-status`);
-    const log = t => { st.className = "mu-status"; st.textContent = t; };
+    const st = () => $(`#mu-review .mu-card[data-g="${i}"] .mu-status`) || { set className(v) {}, set textContent(v) {} };
+    const log = t => { g.msg = t; const e = st(); e.className = "mu-status"; e.textContent = t; };
     g.files = g.files.filter(f => f.type !== "ignorar");
-    if (!g.titulo.trim()) { st.className = "mu-status bad"; st.textContent = "Falta o nome da música."; continue; }
+    if (!g.titulo.trim()) { const e = st(); e.className = "mu-status bad"; e.textContent = "Falta o nome da música."; continue; }
     try {
       await L.sendSong(g, {
         log,
         upload: (path, blob, type) => uploadBytes(sref(storage, path), blob, { contentType: type }),
         save: (id, data) => setDoc(doc(db, "songs", id), { ...data, updatedAt: serverTimestamp() }, { merge: true })
       });
-      st.className = "mu-status ok"; st.textContent = "Enviada."; g.done = true; ok++;
-    } catch (e) { console.error(e); st.className = "mu-status bad"; st.textContent = "Não deu certo: " + (e.message || "tente de novo"); }
+      const e = st(); e.className = "mu-status ok"; e.textContent = "Enviada."; g.done = true; ok++;
+    } catch (err) {
+      console.error(err);
+      const msg = STORAGE_ERR[err?.code] || err?.message || "tente de novo";
+      erro = msg;
+      const e = st(); e.className = "mu-status bad"; e.textContent = "Não deu certo: " + msg;
+      if (STORAGE_ERR[err?.code] && err.code !== "storage/retry-limit-exceeded") break; // o mesmo erro vai se repetir nas outras
+    }
   }
+  sending = false;
   urlCache.clear(); Object.keys(cifraCache).forEach(k => delete cifraCache[k]);
   await loadSongs(); renderList(); renderMusicAdmin();
   REVIEW = REVIEW.filter(g => !g.done);
-  toast(ok + (ok === 1 ? " música enviada." : " músicas enviadas."));
-  if (REVIEW.length) renderReview(); else $("#mu-review").innerHTML = "";
+  if (ok) toast(ok + (ok === 1 ? " música enviada." : " músicas enviadas."));
+  if (erro && !ok) toast("Não enviou: " + erro);
+  if (REVIEW.length) {
+    renderReview();
+    if (erro) setTimeout(() => { const e = $("#mu-review .mu-status"); if (e) { e.className = "mu-status bad"; e.textContent = "Não deu certo: " + erro; } }, 50);
+  } else $("#mu-review").innerHTML = "";
 }
 function editSong(x) {
   REVIEW = [{ id: x.id, titulo: x.titulo, autor: x.autor || "", youtube: x.youtube || "", curso: x.curso !== false, existe: true, files: [] }];
